@@ -4,7 +4,7 @@ This is a lightweight backend framework for NodeJS.
 
 ## Prerequisites
 
- - NodeJS > 15.3.0
+ - NodeJS >= 15.3.0
  - NPM
 
 ## Installation
