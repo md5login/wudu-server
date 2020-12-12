@@ -3,9 +3,8 @@ import url from 'url';
 import FileServer from "../server/FileServer.js";
 
 const routes = new Map();
-const staticPaths = new Map();
 const customPipes = new Map();
-const globalPipes = new Map();
+const globalPipes = new Set();
 
 function processEndpointUrl (url) {
     url = new RegExp('^' + url
@@ -46,6 +45,10 @@ export default class Router {
         let bestMatch = '';
         let bestApi;
         let groups = {};
+        let gpipes = await Promise.all([...globalPipes].map(gpipe => gpipe(req, res)));
+        if (gpipes.some(gp => !gp)) {
+            return !res.writableEnded && res.end();
+        }
         for (let [route, apiObject] of routes.get(method).entries()) {
             let match = parsedUrl.pathname.match(route);
             if (match) {
@@ -90,6 +93,10 @@ export default class Router {
 
     static addPipe (name, handler = (req, res, arg) => {}) {
         customPipes.set(name, handler);
+    }
+
+    static addGlobalPipe (handler = (req, res) => {}) {
+        globalPipes.add(handler);
     }
 
     static addEndpoints (...endpoints) {
