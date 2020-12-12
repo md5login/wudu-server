@@ -396,10 +396,14 @@ Router.addGlobalPipe(blockPosts);
 # TODOs
 
 Can't wait
- - Support for protocols HTTPS, HTTP2, WEBSOCKET
+ - Support for protocols HTTPS, HTTP2
  - Basic cookie management
  - Server-side html rendering support
 
 Can wait
+ - Support for WEBSOCKET protocol
  - Cache-Control and ETag support
- - 
+
+Nice to have
+ - Dependencies scanner for HTTP2
+ - App restart on file changes
