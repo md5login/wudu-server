@@ -5,7 +5,7 @@ let app = new App('{{appName}}');
 
 app.router = Router.handler;
 
-Router.serveStatic(['/index.html'], {pathPrefix: 'client'});
+Router.serveStatic(['/index.html'], {root: 'client'});
 Router.addEndpoints(IndexEndpoint);
 
 app.runServer({

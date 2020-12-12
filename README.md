@@ -23,7 +23,7 @@ Cons
 # Installation
 
 ```shell
-npm install wudu-server
+npm i -g wudu-server
 ```
 
 ## Create server
@@ -214,7 +214,7 @@ Router.serveStatic(['/views', '/js', '/assets']);
 // prefixed paths
 // [GET] /views/index.html will be server from relative 'client/views'
 Router.serveStatic(['/views', '/js', '/assets'], {
-    pathPrefix: 'client'
+    root: 'client'
 });
 ```
 

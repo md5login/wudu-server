@@ -32,7 +32,7 @@ export default class Request extends http.IncomingMessage {
     }
 
     async json () {
-        return JSON.parse(await this.body().toString());
+        return JSON.parse((await this.body()).toString());
     }
 
     multipart (maxPayloadSize) {

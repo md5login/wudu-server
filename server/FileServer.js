@@ -37,7 +37,7 @@ export default class FileServer {
 
     }
     static async serveFile (filePath, response, options = {}) {
-        filePath = path.join(options.pathPrefix || '', filePath);
+        filePath = path.join(options.root || '', filePath);
         let stat = await fs.promises.stat(filePath);
         if (options.ifModifiedSince && stat) {
             if (options.ifModifiedSince === new Date(stat.mtime).toUTCString()) {

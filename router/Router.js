@@ -15,17 +15,19 @@ function processEndpointUrl (url) {
 }
 
 function getFullNamespace (endpoint) {
-    let ns = [endpoint.namespace];
+    let ns = [endpoint.namespace || ''];
     while (endpoint.__proto__.namespace) {
         ns.unshift(endpoint.__proto__.namespace);
         endpoint = endpoint.__proto__;
     }
-    return ns.join('/');
+    ns = path.join(...ns);
+    if (!ns.startsWith('/')) ns = '/' + ns;
+    return ns;
 }
 
 function createApi (fnName, ns) {
     let [method, url, ...pipes] = fnName.split(' ');
-    url = path.normalize(`${ns}/${url}`);
+    url = path.join(ns, url);
     method = method.toUpperCase();
     pipes = pipes.map(pipe => {
         let [handler, arg] = pipe.split(':');
