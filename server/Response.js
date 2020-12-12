@@ -1,5 +1,4 @@
 import http from 'http';
-import fs from 'fs';
 import FileServer from "./FileServer.js";
 
 export default class Response extends http.ServerResponse {
@@ -8,8 +7,7 @@ export default class Response extends http.ServerResponse {
     }
 
     async file (path, options = {}) {
-        let file = await fs.promises.readFile(path);
-        return FileServer.serveFileHTTP(path, this, options);
+        return FileServer.serveFile(path, this, options);
     }
 
     json (obj, encoding = 'utf8') {

@@ -4,17 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import readline from 'readline';
 
-function printHelp () {
-    console.log(`
-|    command    |    arguments    |    meaning                |
-|---------------|-----------------|---------------------------|    
-| -h, help      | none            | this help
-| -c, create    | appname         | create a simple server app
-| -da, demoapp  | none            | create a demo app with basic presentation of the framework abilities
-|---------------|-----------------|---------------------------|
-    `);
-}
-
 async function createDirsRec (dirs = []) {
     let cwd = process.cwd();
     for (let dir of dirs) {
@@ -25,42 +14,47 @@ async function createDirsRec (dirs = []) {
 
 async function createFiles (files, replacers = {}) {
     let cwd = process.cwd();
-    for (let [filePath, {content}] of Object.entries(files)) {
-        filePath = path.join(cwd, '/', filePath);
-        let str = Buffer.from(content, 'base64').toString();
-        str = str.replace(/{{(\w+?)}}/g, (full, match) => replacers[match] || '');
-        await fs.promises.writeFile(filePath, str);
+    for (let [filePath, content] of Object.entries(files)) {
+        filePath = path.join(cwd, filePath);
+        if (/{{(\w+?)}}/.test(content.toString())){
+            content = content.toString().replace(/{{(\w+?)}}/g, (full, match) => replacers[match] || '');
+        }
+        await fs.promises.writeFile(filePath, content);
     }
 }
 
-async function create (params) {
+async function create (dirStruct, fileStruct, params) {
     console.log(`Creating application ${params.appName}`);
-    let dirStruct = [
-        'client',
-        'server/endpoints'
-    ];
-
-    let fileStruct = {
-        'server/endpoints/IndexEndpoint.js': {
-            content: 'CmV4cG9ydCBkZWZhdWx0IGNsYXNzIEluZGV4RW5kcG9pbnQgewogICAgc3RhdGljIFsnR0VUIC8nXSAocmVxLCByZXMpIHsKICAgICAgICByZXMuaHRtbChgCjwhRE9DVFlQRSBodG1sPgo8aHRtbD4KPGhlYWQ+CiAgICA8dGl0bGU+e3thcHBOYW1lfX08L3RpdGxlPiAgICAKPC9oZWFkPgogICAgPGJvZHk+V2VsY29tZSB0byB7e2FwcE5hbWV9fTwvYm9keT4gICAgICAgIAo8L2h0bWw+CiAgICAgICAgYCk7CiAgICB9Cn0KICAgICAgICAgICAg'
-        },
-        'index.js': {
-            content: 'aW1wb3J0IHtBcHAsIFJvdXRlciwgU2VydmVyfSBmcm9tICd3dWR1LXNlcnZlcic7CmltcG9ydCBJbmRleEVuZHBvaW50IGZyb20gIi4vc2VydmVyL2VuZHBvaW50cy9JbmRleEVuZHBvaW50LmpzIjsKCmxldCBhcHAgPSBuZXcgQXBwKCd7e2FwcE5hbWV9fScpOwoKYXBwLnJvdXRlciA9IFJvdXRlci5oYW5kbGVyOwoKUm91dGVyLmFkZEVuZHBvaW50cyhJbmRleEVuZHBvaW50KTsKCmFwcC5ydW5TZXJ2ZXIoewogICAgcHJvdG9jb2w6IFNlcnZlci5IVFRQLAogICAgcG9ydDoge3twb3J0fX0KfSk7'
-        },
-        'package.json': {
-            content: 'ewogICJuYW1lIjogInt7YXBwTmFtZX19IiwKICAidmVyc2lvbiI6ICIxLjAuMCIsCiAgImRlc2NyaXB0aW9uIjogInt7YXBwRGVzY3JpcHRpb259fSIsCiAgIm1haW4iOiAiaW5kZXguanMiLAogICJ0eXBlIjogIm1vZHVsZSIsCiAgInNjcmlwdHMiOiB7CiAgICAic3RhcnQiOiAibm9kZSBpbmRleC5qcyIKICB9LAogICJhdXRob3IiOiAie3thdXRob3J9fSIsCiAgImxpY2Vuc2UiOiAiSVNDIgp9'
-        }
-    }
-
-    await createDirsRec (dirStruct);
+    await createDirsRec(dirStruct);
     await createFiles(fileStruct, params);
 }
 
-function createDemo () {}
+async function traverseDir (entry) {
+    let dirStruct = new Set();
+    let fileStruct = {};
+    let orgEntry = path.normalize(entry);
+
+    async function rec (entry, parent = '') {
+        let p = path.resolve(parent, entry);
+        for (let item of await fs.promises.readdir(p)) {
+            let file = path.resolve(p, item);
+            let stat = await fs.promises.stat(file);
+            if (stat && stat.isDirectory()) {
+                dirStruct.add(file.replace(orgEntry, ''));
+                await rec(file, p + path.sep);
+            } else {
+                fileStruct[file.replace(orgEntry, '')] = await fs.promises.readFile(file);
+            }
+        }
+    }
+
+    await rec(entry);
+    return {dirStruct, fileStruct};
+}
 
 function getUserInput (question) {
     let rl = readline.createInterface({input: process.stdin, output: process.stdout});
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         rl.question(question, answer => {
             resolve(answer);
             rl.close();
@@ -69,22 +63,22 @@ function getUserInput (question) {
 }
 
 async function main (node, file, action) {
-    let params;
+    let params = {};
     switch (action) {
         case 'init':
-            let appName = await getUserInput('App name: ');
-            let appDescription = await getUserInput('App description (blank): ');
-            let author = await getUserInput('Author (blank): ');
-            let port = await getUserInput('Port (3000): ') || 3000;
-            create({appName, appDescription, author, port});
+            params.appName = await getUserInput('App name: ');
+            params.appDescription = await getUserInput('App description (blank): ');
+            params.author = await getUserInput('Author (blank): ');
+            params.port = await getUserInput('Port (3000): ') || 3000;
+            let [,,, ...moduleDir] = import.meta.url.split('/');
+            moduleDir.pop();
+            moduleDir = moduleDir.join('/');
+            let {dirStruct, fileStruct} = await traverseDir(`${moduleDir}/template/basic`);
+            create([...dirStruct], fileStruct, params);
             break;
         case 'run':
             import(`file:///${process.cwd()}/index.js`);
             break;
-        case 'help':
-        case '-h':
-        default:
-            printHelp();
     }
 }
 

@@ -1,7 +1,7 @@
 import Server from "../server/Server.js";
 
 export default class App {
-    #router;
+    #router = () => {};
     #server;
 
     set router (value) {

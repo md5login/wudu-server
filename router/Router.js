@@ -21,7 +21,7 @@ function getFullNamespace (endpoint) {
         ns.unshift(endpoint.__proto__.namespace);
         endpoint = endpoint.__proto__;
     }
-    return ns.join('');
+    return ns.join('/');
 }
 
 function createApi (fnName, ns) {
@@ -58,11 +58,14 @@ export default class Router {
             }
         }
         if (bestMatch) {
+            req.query = {...parsedUrl.query};
             if (groups) {
                 req.params = {...groups};
             }
             for (let pipe of bestApi.pipes) {
-                if (!(await customPipes.get(pipe.handler)(req, res, pipe.arg))) return res.end();
+                if (!(await customPipes.get(pipe.handler)(req, res, pipe.arg))) {
+                    return !res.writableEnded && res.end();
+                }
             }
             return bestApi.handler[bestApi.fnName](req, res);
         }
@@ -77,7 +80,12 @@ export default class Router {
         } else if (acceptEncodings.includes('gzip')) {
             compression = 'gzip';
         }
-        return FileServer.serveFileHTTP(url.parse(req.url).pathname, res, {compression, ...apiObject.options});
+        let reqUrl = url.parse(req.url).pathname;
+        if (!apiObject.options.enableTraverse && reqUrl.includes('../')) {
+            res.writeHead(403);
+            return res.send(null);
+        }
+        return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...apiObject.options});
     }
 
     static addPipe (name, handler = (req, res, arg) => {}) {

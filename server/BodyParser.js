@@ -40,6 +40,9 @@ export default class BodyParser {
                 result.isFile = true;
                 result.filename = fileName;
             }
+            else {
+                result.isFile = false;
+            }
         }
         result.contentType = result.headers['content-type'] || 'text/plain';
         return result;

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import zlib from "zlib";
 import path from 'path';
+import MimeTypes from "./MimeTypes.js";
 
 export default class FileServer {
     static bufferToBrotli (buff) {
@@ -19,62 +20,58 @@ export default class FileServer {
             });
         });
     }
-    static respond (stream, headers, buffer) {
-        if (stream.closed || stream.destroyed) return;
-        try {
-            stream.on('error', e => {});
-            stream.respond(headers);
-            if (buffer) {
-                stream.write(buffer, err => {
-                    if (err) throw err;
-                    stream.end();
-                });
-            } else {
-                stream.end();
-            }
-        } catch (e) {}
+    static streamFile (filePath, stream, options = {}) {
+        // if (stream.closed || stream.destroyed) return;
+        // try {
+        //     stream.on('error', e => {});
+        //     stream.respond(headers);
+        //     if (buffer) {
+        //         stream.write(buffer, err => {
+        //             if (err) throw err;
+        //             stream.end();
+        //         });
+        //     } else {
+        //         stream.end();
+        //     }
+        // } catch (e) {}
+
     }
-    static async serveFileHTTP (filePath, response, options = {}) {
-        let file = await fs.promises.readFile(path.join(options.pathPrefix || '', filePath));
+    static async serveFile (filePath, response, options = {}) {
+        filePath = path.join(options.pathPrefix || '', filePath);
+        let stat = await fs.promises.stat(filePath);
+        if (options.ifModifiedSince && stat) {
+            if (options.ifModifiedSince === new Date(stat.mtime).toUTCString()) {
+                response.writeHead(304, {});
+                response.end(null);
+                return;
+            }
+        }
+        let file = await fs.promises.readFile(filePath);
         let mime = FileServer.getMimeTypeByName(filePath);
         let headers = {
-            'content-type': mime
+            'Content-Type': mime,
+            'Last-Modified': new Date(stat.mtime).toUTCString(),
+            'Content-Length': file.length,
+            ...(options.headers || {})
         };
         switch (options.compression) {
             case 'none':
                 break;
             case 'br':
                 file = await FileServer.bufferToBrotli(file);
-                headers['content-encoding'] = options.compression;
+                headers['Content-Encoding'] = options.compression;
                 break;
             case 'gzip':
                 file = await FileServer.bufferToGzip(file);
-                headers['content-encoding'] = options.compression;
+                headers['Content-Encoding'] = options.compression;
                 break;
         }
+        console.log(file, headers);
         response.writeHead(200, headers);
         response.end(file);
     }
-    static async serveFileHttp2 (path, request) {}
     static getMimeTypeByName (filename) {
-        let ext = filename.split('.').pop().toLowerCase();
-        let mimes = {
-            jpg: 'image/jpeg',
-            jpeg: 'image/jpeg',
-            png: 'image/png',
-            tiff: 'image/tiff',
-            webp: 'image/webp',
-            css: 'text/css',
-            html: 'text/html',
-            mp3: 'audio/mp3',
-            mp4: 'video/mp4',
-            js: 'application/javascript',
-            json: 'application/json',
-            ttf: 'application/octet-stream',
-            svg: 'image/svg+xml',
-            woff: 'application/octet-stream',
-            woff2: 'application/octet-stream'
-        };
-        return mimes[ext];
+        let ext = path.extname(filename).replace('.', '');
+        return MimeTypes[ext] || 'application/octet-stream';
     }
 }
