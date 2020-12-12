@@ -46,8 +46,9 @@ export default class Router {
         let bestApi;
         let groups = {};
         let gpipes = await Promise.all([...globalPipes].map(gpipe => gpipe(req, res)));
-        if (gpipes.some(gp => !gp)) {
-            return !res.writableEnded && res.end();
+        if (gpipes.some(gp => !gp) && !res.writableEnded) {
+            res.writeHead(403);
+            res.end(null);
         }
         for (let [route, apiObject] of routes.get(method).entries()) {
             let match = parsedUrl.pathname.match(route);

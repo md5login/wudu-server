@@ -66,7 +66,6 @@ export default class FileServer {
                 headers['Content-Encoding'] = options.compression;
                 break;
         }
-        console.log(file, headers);
         response.writeHead(200, headers);
         response.end(file);
     }

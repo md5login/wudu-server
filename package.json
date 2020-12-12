@@ -1,6 +1,6 @@
 {
   "name": "wudu-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "NodeJS backend framework to make things easier",
   "main": "index.js",
   "type": "module",
@@ -14,5 +14,9 @@
     "Framework"
   ],
   "author": "Michal Sazonov",
-  "license": "ISC"
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/md5login/wudu-server/issues"
+  },
+  "homepage": "https://gitlab.com/md5login/wudu-server"
 }
