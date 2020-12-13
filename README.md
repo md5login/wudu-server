@@ -396,7 +396,7 @@ Router.addGlobalPipe(blockPosts);
 # TODOs
 
 Can't wait
- - Support for protocols HTTPS, HTTP2
+ - Support for HTTP2 protocol
  - Basic cookie management
  - Server-side html rendering support
 

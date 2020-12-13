@@ -1,4 +1,5 @@
 import http from 'http';
+import https from 'https';
 import Request from "./Request.js";
 import Response from "./Response.js";
 
@@ -14,6 +15,11 @@ export default class Server {
         if (initParams.listener) this.#listener = initParams.listener;
         switch (initParams.protocol) {
             case Server.HTTPS:
+                this.#server = https.createServer({
+                    IncomingMessage: Request,
+                    ServerResponse: Response,
+                    ...initParams.options
+                }, (...a) => this.#listener(...a));
                 break;
             case Server.HTTP2:
                 break;

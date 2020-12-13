@@ -1,6 +1,7 @@
 import path from 'path';
 import url from 'url';
 import FileServer from "../server/FileServer.js";
+import querystring from 'querystring';
 
 const routes = new Map();
 const customPipes = new Map();
@@ -64,7 +65,8 @@ export default class Router {
             }
         }
         if (bestMatch) {
-            req.query = {...parsedUrl.query};
+            req.query = {};
+            if (parsedUrl.search) req.query = querystring.parse(parsedUrl.search.substr(1));
             if (groups) {
                 req.params = {...groups};
             }
