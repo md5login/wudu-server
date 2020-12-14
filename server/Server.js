@@ -22,8 +22,10 @@ export default class Server {
                 }, (...a) => this.#listener(...a));
                 break;
             case Server.HTTP2:
+                console.log('Sorry, HTTP2 protocol is not supported in this version');
                 break;
             case Server.WEBSOCKET:
+                console.log('Sorry, WEBSOCKET protocol is not supported in this version');
                 break;
             case Server.HTTP:
             default:
