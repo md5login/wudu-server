@@ -82,7 +82,7 @@ const server = new Server(params);
 ### params
 ```javascript
 const params = {
-    protocol: {Server.HTTP|Server.HTTPS|Server.HTTP2|Server.WEBSOCKET},
+    protocol: {Server.HTTP|Server.HTTPS|},
     port: Number|3000,
     listener: function (req, res) {},
     options: ServerOptions
@@ -171,7 +171,7 @@ A singleton that allows to add routing to your server.
 
 ### Router.handler
 Is a static method that handles client requests. 
-It can be set on you wudu app or directly as listener in server params:
+It can be set on your wudu app or directly as listener in server params:
 ```javascript
 import {App, Server, Router} from 'wudu-server';
 
