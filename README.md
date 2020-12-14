@@ -82,7 +82,7 @@ const server = new Server(params);
 ### params
 ```javascript
 const params = {
-    protocol: {Server.HTTP|Server.HTTPS|},
+    protocol: {Server.HTTP|Server.HTTPS},
     port: Number|3000,
     listener: function (req, res) {},
     options: ServerOptions
