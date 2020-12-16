@@ -18,6 +18,7 @@ export default class Server {
                     ServerResponse: Response,
                     ...initParams.options
                 }, (...a) => this.#listener(...a));
+                this.#server.listen(initParams.port || 443);
                 break;
             case Server.HTTP:
             default:
