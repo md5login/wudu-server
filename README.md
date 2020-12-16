@@ -23,34 +23,59 @@ Cons
 # Installation
 
 ```shell
-npm i -g wudu-server
+npm i wudu-server
 ```
 
-## Create server
+# Create Simple Server
 
-Create and go to you project's directory:
-```shell
-mkdir {MY_PROJECT}
-cd {MY_PROJECT}
+## Suggested project structure
+    Project directory
+     ├ client
+     |  ┖ index.html
+     ├ server
+     |  ┖ endpoints
+     |     ┖ IndexEndpoint.js
+     ┕ index.js
+
+## Code
+**index.js**
+
+```javascript
+import {App, Router, Server} from 'wudu-server';
+import IndexEndpoint from "./server/endpoints/IndexEndpoint.js";
+
+// create new application
+let app = new App();
+
+// assign router to your app
+app.router = Router.handler;
+
+// add endpoint to your router
+Router.addEndpoints(IndexEndpoint);
+
+// run your app as a server
+app.runServer({
+    protocol: Server.HTTP,
+    port: 80
+});
 ```
 
-Iniitialize wudu-server (with permissions to modify filesystem):
-```shell
-wudu init
+**server/endpoints/IndexEndpoint.js**
+```javascript
+export default class IndexEndpoint {
+    static ['GET /'] (req, res) {
+        res.file('./client/index.html', {ifModifiedSince: req.headers['if-modified-since']});
+    }
+}
 ```
 
-You will be prompted for a couple of details:
-```shell
-App name:
-App description (blank):
-Author (blank):
-Port (3000):
-```
-
-Once the details are filled, wudu will create the needed structure.
-To run the server, use either:
-```shell
-wudu run
+**client/index.html**
+```html
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>Hello, world!</body>
+</html>
 ```
 
 # Documentation

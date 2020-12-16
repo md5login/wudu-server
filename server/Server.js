@@ -6,8 +6,6 @@ import Response from "./Response.js";
 export default class Server {
     static HTTP = 1;
     static HTTPS = 2;
-    static HTTP2 = 3;
-    static WEBSOCKET = 4;
     #server;
     #listener = (req, res) => res.end();
 
@@ -20,12 +18,6 @@ export default class Server {
                     ServerResponse: Response,
                     ...initParams.options
                 }, (...a) => this.#listener(...a));
-                break;
-            case Server.HTTP2:
-                console.log('Sorry, HTTP2 protocol is not supported in this version');
-                break;
-            case Server.WEBSOCKET:
-                console.log('Sorry, WEBSOCKET protocol is not supported in this version');
                 break;
             case Server.HTTP:
             default:

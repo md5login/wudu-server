@@ -4,9 +4,6 @@
   "description": "NodeJS backend framework to make things easier",
   "main": "index.js",
   "type": "module",
-  "bin": {
-    "wudu": "bin/main.js"
-  },
   "scripts": {},
   "keywords": [
     "NodeJS",
