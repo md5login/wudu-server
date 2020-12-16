@@ -78,6 +78,11 @@ export default class IndexEndpoint {
 </html>
 ```
 
+## Run
+```shell
+node index.js
+```
+
 # Documentation
 
 ## App
