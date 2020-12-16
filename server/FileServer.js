@@ -51,7 +51,6 @@ export default class FileServer {
         let headers = {
             'Content-Type': mime,
             'Last-Modified': new Date(stat.mtime).toUTCString(),
-            'Content-Length': file.length,
             ...(options.headers || {})
         };
         switch (options.compression) {
@@ -66,6 +65,7 @@ export default class FileServer {
                 headers['Content-Encoding'] = options.compression;
                 break;
         }
+        headers['Content-Length'] = file.length;
         response.writeHead(200, headers);
         response.end(file);
     }
