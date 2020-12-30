@@ -21,7 +21,7 @@ function getFullNamespace (endpoint) {
         ns.unshift(endpoint.__proto__.namespace);
         endpoint = endpoint.__proto__;
     }
-    ns = path.join(...ns);
+    ns = path.join(...ns).replace(/\\/g, '/'); // join and replace Windows path separator '\' to '/'
     if (!ns.startsWith('/')) ns = '/' + ns;
     return ns;
 }
