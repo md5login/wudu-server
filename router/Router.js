@@ -21,7 +21,7 @@ function getFullNamespace (endpoint) {
         ns.unshift(endpoint.__proto__.namespace);
         endpoint = endpoint.__proto__;
     }
-    path.join(...ns);
+    return path.join(...ns);
 }
 
 function createApi (fnName, ns) {
