@@ -21,14 +21,17 @@ function getFullNamespace (endpoint) {
         ns.unshift(endpoint.__proto__.namespace);
         endpoint = endpoint.__proto__;
     }
-    return path.join(...ns);
+    return path.join(...new Set(ns));
 }
 
 function createApi (fnName, ns) {
+    if (ns === '.') ns = '';
     let [method, url, ...pipes] = fnName.split(' ');
+    console.log(url, ns);
     url = path.join(ns, url).replace(/\\/g, '/'); // join and replace Windows path separator '\' to '/'
     url = url.replace(/\/$/, ''); // remove trailing slash
     if (!url.startsWith('/')) url = '/' + url; // add leading slash if not exists
+    console.log(url, ns);
     method = method.toUpperCase();
     pipes = pipes.map(pipe => {
         let [handler, arg] = pipe.split(':');

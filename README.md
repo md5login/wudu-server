@@ -279,8 +279,8 @@ Router.addEndpoints(IndexEndpoint);
 To define a namespace for you routing, add `static namespace = 'MY_NAMESPACE';` to your endpoint class:
 ```javascript
 class UserEndpoint {
-    static namespace = 'user';
-    // serve POST request to 'user/name'
+    static namespace = '/user';
+    // serve POST request to '/user/name'
     static ['POST /name'] (req, res) {
         res.json({name: 'Johny'});
     }
@@ -290,15 +290,28 @@ class UserEndpoint {
 Namespaces can be inherited:
 ```javascript
 class ApiEndpoint {
-    static namespace = 'api';
+    static namespace = '/api';
 }
 
 class UserEndpoint extends ApiEndpoint {
-    static namespace = 'user';
-    // serve POST request to 'api/user/name'
+    static namespace = '/user';
+    // serve POST request to '/api/user/name'
     static ['POST /name'] (req, res) {
         res.json({name: 'Johny'});
     }
+}
+```
+
+Namespaces must be unique:
+```js
+class ApiEndpoint {
+    static namesapce = '/api';
+}
+
+class UserEndpoint extends ApiEndpoint {
+    static namespace = '/api'; // not unique - omitted
+    // serve GET request to '/api/user'
+    static ['GET /user'] (req, res) {}
 }
 ```
 
