@@ -1,6 +1,6 @@
 {
   "name": "wudu-server",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "NodeJS backend framework to make things easier",
   "main": "index.js",
   "type": "module",
