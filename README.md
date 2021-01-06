@@ -107,7 +107,9 @@ node index.js
 - Any request payload size is now limited to Request.MAX_PAYLOAD_SIZE (8MB) by default
 
 #### Fixes
- - Parameter name parsing inside multipart payload
+- Parameter name parsing inside multipart payload
+- Multipart parsing failure for small files
+- Multipart payload values got trailing CRLF
 
 
 # Documentation

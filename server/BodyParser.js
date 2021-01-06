@@ -30,7 +30,7 @@ export default class BodyParser {
         let result = {};
         let headersEnd = payload.indexOf(DOUBLE_CRLF);
         result.headers = this.#extractHeaders(payload.slice(0, headersEnd));
-        result.value = payload.slice(headersEnd + DOUBLE_CRLF.length);
+        result.value = payload.slice(headersEnd + DOUBLE_CRLF.length, payload.length - 2);
         if (result.headers['content-disposition']) {
             let cd = result.headers['content-disposition'];
             result.paramName = cd.replace(/^.* name="(.+?)".*$/, '$1');
@@ -53,7 +53,7 @@ export default class BodyParser {
             let boundary = Buffer.from(`--${request.headers['content-type'].split('boundary=')[1]}`);
             let contentLength = +request.headers['content-length'];
             if (contentLength > maxSize) return reject('too large');
-            let cursor = 0;
+            let cursor;
             let size = 0;
             let indices = [];
             let abort = false;
