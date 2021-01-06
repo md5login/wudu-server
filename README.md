@@ -77,7 +77,7 @@ export default class IndexEndpoint {
 ```
 
 ### HTTPS
-Use can start an HTTPS server by replacing the corresponding code in  **index.js** by the following:
+You can start an HTTPS server by replacing the corresponding code in  **index.js** by the following:
 ```js
 // run your app as a server
 app.runServer({
