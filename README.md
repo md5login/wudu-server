@@ -110,7 +110,7 @@ node index.js
 - Multipart payload values got trailing CRLF
 
 # Documentation
-Read the docs in the [repo](https://gitlab.com/md5login/wudu-server/-/blob/master/DOCS.md)
+Read the [DOCS](https://gitlab.com/md5login/wudu-server/-/blob/master/DOCS.md)
 
 # Bugs and Issues
 Feel free to open bugs, issues or suggest improvements [here](https://gitlab.com/md5login/wudu-server/issues).
