@@ -96,21 +96,9 @@ app.runServer({
 node index.js
 ```
 
-# Changelog
-### v0.2.0
-#### New features
-- Added this changelog
-- Added basic cookie management
-- ".map()" added to `Request`
-- Any request payload size is now limited to Request.MAX_PAYLOAD_SIZE (8MB) by default
+## [CHANGELOG](https://gitlab.com/md5login/wudu-server/-/blob/master/CHANGELOG.md)
 
-#### Fixes
-- Parameter name parsing inside multipart payload
-- Multipart parsing failure for small files
-- Multipart payload values got trailing CRLF
+## [DOCUMENTATION](https://gitlab.com/md5login/wudu-server/-/blob/master/DOCS.md)
 
-# Documentation
-Read the [DOCS](https://gitlab.com/md5login/wudu-server/-/blob/master/DOCS.md)
-
-# Bugs and Issues
+## Bugs and Issues
 Feel free to open bugs, issues or suggest improvements [here](https://gitlab.com/md5login/wudu-server/issues).
