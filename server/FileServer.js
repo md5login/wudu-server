@@ -41,7 +41,7 @@ export default class FileServer {
         let stat = await fs.promises.stat(filePath);
         if (options.ifModifiedSince && stat) {
             if (options.ifModifiedSince === new Date(stat.mtime).toUTCString()) {
-                response.writeHead(304, {});
+                response.writeHead(304);
                 response.end(null);
                 return;
             }

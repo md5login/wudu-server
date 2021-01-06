@@ -78,10 +78,37 @@ export default class IndexEndpoint {
 </html>
 ```
 
+### HTTPS
+Use can start an HTTPS server by replacing the corresponding code in  **index.js** by the following:
+```js
+// run your app as a server
+app.runServer({
+    protocol: Server.HTTPS,
+    port: 443,
+    options: { // corresponds to native NodeJS https config
+        key: fs.readFileSync('PATH_TO_KEY'),
+        cert: fs.readFileSync('PATH_TO_CERT'),
+        ...
+    }
+});
+```
+
 ## Run
 ```shell
 node index.js
 ```
+
+# Changelog
+### v0.2.0
+#### New features
+- Added this changelog
+- Added basic cookie management
+- `Request.map()`
+- Any request payload size is now limited to Request.MAX_PAYLOAD_SIZE (8MB) by default
+
+#### Fixes
+ - Parameter name parsing inside multipart payload
+
 
 # Documentation
 
@@ -130,76 +157,177 @@ let options = {
 These options are passed to the corresponding server initializer based on the selected protocol.
 
 ## Request
+This class extends `http.IncomingMessage` with some additional functionality.
 ```javascript
 class Request extends http.IncomingMessage
 ```
-There are just a few additions to the native `http.IncomingMessage`:
-```javascript
-const someRequestHandler = async (req, res) => {
-    // get payload as Buffer
-    const payloadBuffer = await req.body();
-    // get pyaload as JSON
-    const payloadObject = await req.json();
-    // get payload as multipart
-    const multipartData = await req.multipart();
-}
-```
 
-`request.multipart` returns an array of parsed multipart payload items:
-```javascript
-const multiData = await request.multipart();
-// each item relates to a payload block inside payload boundaries
-for (let dataItem of multiData) {
-    console.log(dataItem.isFile); // a boolean
-    console.log(dataItem.filename); // name of the file
-    console.log(dataItem.paramName); // parameter name in payload
-    console.log(dataItem.headers); // headers object of payload item
-    console.log(dataItem.value); // Buffer containing the data passed in payload item
-    console.log(data.contentType); // shortcut to headers['content-type']. default: text/plain
+### .MAX_PAYLOAD_SIZE
+Static property that limits payload size for requests with a payload. Default is 8388608 - 8MB.
+>**Important!** Overriding this value will affect all requests.
+
+### .cookies
+An interface to read cookies. See `Request.cookies` section under **Cookie Management**.
+
+### .body()
+Get the payload body as a `Buffer` asynchronously.
+#### Syntax
+```js
+await req.body(size = Request.MAX_PAYLOAD_SIZE);
+```
+#### Example
+```js
+class DataEndpoint {
+    static async ['PUT /new-user'] (req, res) {
+        let userData = await req.body();
+        ...
+    }
 }
 ```
+#### Exceptions
+- Content-Length is larger than `size` (throws 'too large')
+- Buffer grows larger than `size` (throws 'too large')
+
+### .json()
+Get the payload body and parse it into an object asynchronously.
+#### Syntax
+```js
+await req.json(size = Request.MAX_PAYLOAD_SIZE);
+```
+#### Example
+```js
+class DataEndpoint {
+    static async ['PUT /new-data'] (req, res) {
+        let userObj = await req.json();
+        ...
+    }
+}
+```
+#### Exceptions
+- Content-Length is larger than `size` (throws 'too large')
+- Buffer grows larger than `size` (throws 'too large')
+
+### .map()
+Get the payload body and parse it into an object by given separator and delimiter asynchronously. Defaults are: `sep = '&'`, `del = '='`, `size = Request.MAX_PAYLOAD_SIZE`
+#### Syntax
+```js
+await req.map(sep = '&', del = '=', size = Request.MAX_PAYLOAD_SIZE);
+```
+#### Example
+```js
+class DataEndpoint {
+    static async ['POST /data'] (req, res) {
+        // given that the payload is 'foo=bar&answer=42'
+        let userObj = await req.map();
+        userObj === {
+            foo: 'bar',
+            answer: '42'
+        };
+        ...
+    }
+}
+```
+#### Exceptions
+- Content-Length is larger than `size` (throws 'too large')
+- Buffer grows larger than `size` (throws 'too large')
+
+### .multipart()
+Gets the payload body and tries to parse into an array of multipart objects asynchronously.
+#### Syntax
+```js
+await req.multipart(size = Request.MAX_PAYLOAD_SIZE);
+```
+#### Example
+```js
+class UploadEndpoint {
+    static async ['PUT /upload'] (req, res) {
+        let userObj = await req.multipart();
+        userObj === [{
+            isFile: true || false,
+            filename: 'string', // name of a file
+            paramName: 'string', // parameter name in payload
+            headers: {}, // map of the headers in payload item
+            values: Buffer, // the payload buffer
+            contentType: 'string' // shortcut to headers['content-type']
+        }, ...];
+    }
+}
+```
+#### Exceptions
+ - The Content-Type header is not multipart/form-data; (throws 'wrong content type')
+ - Content-Length is larger than `size` (throws 'too large')
+ - Buffer grows larger than `size` (throws 'too large')
 
 ## Response
+This class extends `http.ServerResponse` with some additional functionality.
 
-```javascript
-class Response extends http.ServerResponse
+### .cookies
+An interface to write cookies. See `Response.cookies` section under **Cookie Management**.
+
+### .file()
+Respond with a file, while corresponding MIME type is sent automatically.
+#### Syntax
+```js
+res.file(pathToFile, options = {});
 ```
 
-Additions to the native `http.ServerResponse`:
-```javascript
-const someRequestHandler = async (req, res) => {
-    // respond with string (text/plain)
-    res.text('Hello, world!');
-    // respond with object (application/javascript)
-    res.json({success: 1, data: 'OK'});
-    // respond with html (text/html)
-    res.html('<div>Hello, world!</div>');
-    // respond with file (corresponding mime type is sent automatically
-    res.file(pathToFile, options);
+#### Example
+```js
+class MainEndpoint {
+    static ['GET /favicon.ico'] (req, res) {
+        let options = {
+            // if present, 304 will be returned for file that didn't change since the given date
+            // 200 otherwise
+            isModifiedSince: Date.toUTCString(),
+            // whether to compress the response or not
+            compression: 'none|gzip|br'
+        };
+        res.file('./favicon.png', options);
+    }
+}
+```
+### .html(), .text()
+Respond with a string, having the content type set automatically. Default encoding is UTF-8.
+#### Syntax
+```js
+res.html(str, encoding = 'utf8');
+res.text(str, encoding = 'utf8');
+```
+
+#### Example
+```js
+class MainEndpoint {
+    static ['GET /'] (req, res) {
+        res.html('<html></html>'); // responds with Content-Type: text/html
+    }
+    static ['GET /greet'] (req, res) {
+        res.text('Hello, friend!'); // responds with Content-Type: text/plain
+    }
 }
 ```
 
-Each of the methods above end the response.
-
-The methods `.json()`, `.html()` and `.text()` accept encoding as second parameter. Default is 'utf8'.
-
-The `.file()` method accepts `options` parameter:
-```javascript
-let options = {
-    // if present, 304 will be returned for file that didn't change since the given date
-    // 200 otherwise
-    isModifiedSince: Date.toUTCString(),
-    // whether to compress the response or not
-    compression: 'none|gzip|br'
-};
+### .json()
+Respond with a stringified object. Default encoding is UTF-8.
+#### Syntax
+```js
+res.json(obj, encoding = 'utf8');
+```
+#### Example
+```js
+class MainEndpoint {
+    static ['GET /data'] (req, res) {
+        res.json({foo: 'bar', answer: 42}); // responds with Content-Type: application/json
+    }
+}
 ```
 
+>**Important!** Each of the methods above end the response by calling `res.end()` with according arguments.
 
 ## Router
 
 A singleton that allows to add routing to your server.
 
-### Router.handler
+### .handler()
 Is a static method that handles client requests. 
 It can be set on your wudu app or directly as listener in server params:
 ```javascript
@@ -222,7 +350,7 @@ const myCustomServer = new Server({
 });
 ```
 
-### Router.serveStatic
+### .serveStatic()
 Allows adding static paths to be served automatically.
 #### Syntax
 ```javascript
@@ -248,11 +376,11 @@ Router.serveStatic(['/views', '/js', '/assets'], {
 });
 ```
 
-### Router.addEndpoints
+### .addEndpoints()
 Add custom endpoint classes to handle requests.
 #### Syntax
 ```javascript
-Router.addEndpoints(EndpointClass1, EndpointClass2, ...);
+Router.addEndpoints(EndpointClass1[, EndpointClass2[, ...]]);
 ```
 #### Example
 ```javascript
@@ -275,7 +403,8 @@ class IndexEndpoint {
 
 Router.addEndpoints(IndexEndpoint);
 ```
-
+## Namespacing
+### General
 To define a namespace for you routing, add `static namespace = 'MY_NAMESPACE';` to your endpoint class:
 ```javascript
 class UserEndpoint {
@@ -286,7 +415,7 @@ class UserEndpoint {
     }
 }
 ```
-
+### Inheritance
 Namespaces can be inherited:
 ```javascript
 class ApiEndpoint {
@@ -301,7 +430,7 @@ class UserEndpoint extends ApiEndpoint {
     }
 }
 ```
-
+### Constraints
 Namespaces must be unique:
 ```js
 class ApiEndpoint {
@@ -314,6 +443,8 @@ class UserEndpoint extends ApiEndpoint {
     static ['GET /user'] (req, res) {}
 }
 ```
+
+## Defining an Endpoint
 
 ### Endpoint Methods Naming Convention
 ```javascript
@@ -435,18 +566,176 @@ const blockPosts = (req, res) => {
 Router.addGlobalPipe(blockPosts);
 ```
 
+## Cookie Management
+Both `Request` and `Response` instances have the `.cookies` property which is an interface to manage cookies.
+
+`Request.cookies` is an interface to read the request's cookies, while `Response.cookies` is an interface to write cookies.
+These interfaces are created only on explicit access, so you don't have to worry about performance: unless you explicitly access `req.cookies` no cookies are parsed.
+
+### Example
+```js
+class UserEndpoint {
+    static ['GET /session'] (req, res) {
+        if (req.cookies.get('user')) {
+            ...
+        }
+    }
+    static ['POST /login'] (req, res) {
+        ...
+        res.cookies.add('user', userData, {prefix: 'host'});
+    }
+}
+```
+
+## Request.cookies
+An interface to read cookies. Parses cookies on explicit access (one time only). All parsed cookies have their names and values URI-decoded.
+
+### Request.cookies.get()
+Gets a cookie by its name and prefix (optional, default `''`). If the prefix is empty, looks for a cookie by the following order: `cookieName || '__Secure-' + cookieName || '__Host-' + cookieName`.
+If prefix is not `'none'`, nor an empty string, will look for the exact match of `prefix + '-' + cookieName`.
+To strictly match the plain name, use `prefix = 'none'`. For any case previously described, if cookie is not found, `undefined` is returned.
+#### Syntax
+```js
+req.cookies.get(cookieName, prefix = '');
+```
+
+#### Example
+Suppose we have the next cookies set:
+```shell
+__Host-data=something_very_important; Path=/; Secure
+user=user_data
+__Secure-user=secured_user_data; Secure;
+-x-app-test=test123
+```
+```js
+// will return 'user_data'
+req.cookies.get('user'); 
+
+// will return 'something_very_important'
+req.cookies.get('data');
+
+// will return undefined
+req.cookies.get('data', 'none');
+
+// will return 'test123'
+req.cookies.get('app-test', '-x') === req.cookies.get('-x-app-test', 'none');
+```
+
+### Request.cookies.getAll()
+Returns an object containing all the cookies in the request 
+#### Syntax
+```js
+req.cookies.getAll();
+```
+#### Example
+Suppose we have the cookies from the previous example.
+```js
+req.cookies.getAll() === {
+    '__Host-data': 'something_very_important',
+    '__Secure-user': 'secured_user_data',
+    'user': 'user_data',
+    '-x-app-test': 'test123'
+}
+```
+
+## Response.cookies
+An interface to write cookies
+
+### Cookie Configuration
+To better understand the cookie configuration object, please read about [Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie), [SameSite](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite). 
+```js
+let configuration = {
+    httpOnly: true || false, // HttpOnly flag; default false
+    secure: true || false, // Secure flag; default false
+    maxAge: Number(), // Max-Age; default 0
+    expires: Date.toUTCString(), // Expires; default ''
+    path: 'string', // Path; default ''
+    domain: 'string', // Domain; default ''
+    sameSite: 'Lax|Strict|None', // default 'Lax'
+    prefix: 'host|secure|any', // default ''
+    session: true || false // if true, maxAge and expires are omitted
+};
+```
+
+While all the configuration properties are straightforward, the `prefix` property should draw some special attention:
+```js
+// this will add '-x-' to the cookie name
+configuration.prefix = '-x';
+
+// this will create a '__Host-' prefix with all the required properties redefined automatically:
+// for better understanding, read https://tools.ietf.org/html/draft-west-cookie-prefixes-05
+configuration.prefix = 'host';
+
+// this will create a '__Secure-' prefix accordingly:
+configuration.prefix = 'secure';
+```
+
+
+### Request.cookies.create()
+Creates a new cookie string from given arguments
+#### Syntax
+```js
+res.cookies.create(cookieName, value, configuration = {});
+```
+#### Example
+```js
+let c1 = res.cookies.create('user', 'user_data', {prefix: '-x'});
+c1 === '-x-user=user_data';
+
+let c2 = res.cookies.create('user', 'secured_user_data', {predix: 'secure'});
+c2 === '__Secure-user=secured-user-data; Secure';
+
+let c3 = res.cookies.create('user', 'data', {
+    domain: 'example.com',
+    secure: true,
+    path: '/user',
+    expires: 'Thu, 10 Jan 2021 00:00:00 GMT',
+    sameSite: 'Strict'
+});
+c3 === 'user=data; Secure; Expires=Thu, 10 Jan 2021 00:00:00 GMT; Path=/user; Domain=example.com; SameSite=Strict'
+```
+
+### Request.cookies.add()
+Creates a new cookie, taking the same arguments as `cookies.create()` and adds it to the response cookies stack. All the added cookies will be written on `res.end()`. Multiple cookies can be added to a single response.
+
+#### Syntax
+```js
+res.cookies.add(cookieName, value, configuration = {});
+```
+
+#### Example
+```js
+// creates and stores the cookie '__Host-user=secured_data; Secure; Path=/':
+res.cookies.add('user', 'secured_data', {prefix: 'host'});
+// creates and stores the cookie 'user=data; HttpOnly':
+res.cookies.add('user', 'data', {httpOnly: true});
+// previously added cookies are written to the response head here:
+res.end();
+```
+
+### Request.cookies.expire()
+Creates an 'expired' cookie, making the client delete it. If given, the `prefix` parameters must follow cookie configuration rules for `prefix` property. As with `cookies.add()`, the expired cookie is added to cookies stack and written on `res.end()`.
+
+#### Syntax
+```js
+res.cookies.expire(cookieName, prefix = '');
+```
+
+#### Example
+```js
+// adds '-x-user=; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
+res.cookies.expire('user', '-x');
+// adds '__Host-user=; Secure; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
+res.cookies.expire('user', 'host');
+// previously added cookies are written to the response head here:
+res.end();
+```
 
 # TODOs
 
 Can't wait
- - Support for HTTP2 protocol
- - Basic cookie management
  - Server-side html rendering support
 
 Can wait
  - Support for WEBSOCKET protocol
  - Cache-Control and ETag support
-
-Nice to have
- - Dependencies scanner for HTTP2
- - App restart on file changes
