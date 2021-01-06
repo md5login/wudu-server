@@ -98,20 +98,6 @@ app.runServer({
 node index.js
 ```
 
-# Changelog
-### v0.2.0
-#### New features
-- Added this changelog
-- Added basic cookie management
-- `Request.map()`
-- Any request payload size is now limited to Request.MAX_PAYLOAD_SIZE (8MB) by default
-
-#### Fixes
-- Parameter name parsing inside multipart payload
-- Multipart parsing failure for small files
-- Multipart payload values got trailing CRLF
-
-
 # Documentation
 
 ## App
