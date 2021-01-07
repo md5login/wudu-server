@@ -1,4 +1,9 @@
 # Changelog
+- [v0.2.3](v023)
+- [v0.2.2](v022)
+- [v0.2.1](v021)
+- [v0.2.0](v020)
+
 ### v0.2.3
 Migration from GitLab to GitHub
 
