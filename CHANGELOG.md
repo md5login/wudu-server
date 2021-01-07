@@ -1,4 +1,7 @@
 # Changelog
+### 0.2.3
+Migration from GitLab to GitHub
+
 ### v0.2.1
 - README.md reviewed
 - Added DOCS.md

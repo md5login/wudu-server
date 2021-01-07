@@ -96,9 +96,9 @@ app.runServer({
 node index.js
 ```
 
-## [CHANGELOG](https://gitlab.com/md5login/wudu-server/-/blob/master/CHANGELOG.md)
+## [CHANGELOG](https://github.com/md5login/wudu-server/-/blob/master/CHANGELOG.md)
 
-## [DOCUMENTATION](https://gitlab.com/md5login/wudu-server/-/blob/master/DOCS.md)
+## [DOCUMENTATION](https://github.com/md5login/wudu-server/-/blob/master/DOCS.md)
 
 ## Bugs and Issues
-Feel free to open bugs, issues or suggest improvements [here](https://gitlab.com/md5login/wudu-server/issues).
+Feel free to open bugs, issues or suggest improvements [here](https://github.com/md5login/wudu-server/issues).
