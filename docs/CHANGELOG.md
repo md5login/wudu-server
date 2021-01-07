@@ -1,6 +1,9 @@
 # Changelog
-### 0.2.3
+### v0.2.3
 Migration from GitLab to GitHub
+
+### v0.2.2
+Minor fixes
 
 ### v0.2.1
 - README.md reviewed
