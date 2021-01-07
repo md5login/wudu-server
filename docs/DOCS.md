@@ -84,8 +84,6 @@
             - [Example](#example-13)
 - [TODOs](#todos)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 # Welcome to wudu-server
 
 This is a lightweight backend framework for NodeJS.
