@@ -39,8 +39,8 @@ npm i wudu-server
 **index.js**
 
 ```javascript
-import {App, Router, Server} from 'wudu-server';
-import IndexEndpoint from "./server/endpoints/IndexEndpoint.js";
+import { App, Router, Server } from 'wudu-server';
+import IndexEndpoint from "./src/server/endpoints/IndexEndpoint.js";
 
 // create new application
 let app = new App();
@@ -96,9 +96,9 @@ app.runServer({
 node index.js
 ```
 
-## [CHANGELOG](https://github.com/md5login/wudu-server/-/blob/master/CHANGELOG.md)
+## [CHANGELOG](https://github.com/md5login/wudu-server/blob/master/docs/CHANGELOG.md)
 
-## [DOCUMENTATION](https://github.com/md5login/wudu-server/-/blob/master/DOCS.md)
+## [DOCUMENTATION](https://github.com/md5login/wudu-server/blob/master/docs/DOCS.md)
 
 ## Bugs and Issues
 Feel free to open bugs, issues or suggest improvements [here](https://github.com/md5login/wudu-server/issues).

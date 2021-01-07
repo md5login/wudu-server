@@ -41,8 +41,8 @@ npm i wudu-server
 **index.js**
 
 ```javascript
-import {App, Router, Server} from 'wudu-server';
-import IndexEndpoint from "./server/endpoints/IndexEndpoint.js";
+import { App, Router, Server } from 'wudu-server';
+import IndexEndpoint from "./src/server/endpoints/IndexEndpoint.js";
 
 // create new application
 let app = new App();
