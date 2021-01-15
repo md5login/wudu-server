@@ -743,7 +743,7 @@ configuration.prefix = 'secure';
 ```
 
 
-### Request.cookies.create()
+### Response.cookies.create()
 Creates a new cookie string from given arguments
 #### Syntax
 ```js
@@ -767,7 +767,7 @@ let c3 = res.cookies.create('user', 'data', {
 c3 === 'user=data; Secure; Expires=Thu, 10 Jan 2021 00:00:00 GMT; Path=/user; Domain=example.com; SameSite=Strict'
 ```
 
-### Request.cookies.add()
+### Response.cookies.add()
 Creates a new cookie, taking the same arguments as `cookies.create()` and adds it to the response cookies stack. All the added cookies will be written on `res.end()`. Multiple cookies can be added to a single response.
 
 #### Syntax
@@ -785,7 +785,7 @@ res.cookies.add('user', 'data', {httpOnly: true});
 res.end();
 ```
 
-### Request.cookies.expire()
+### Response.cookies.expire()
 Creates an 'expired' cookie, making the client delete it. If given, the `prefix` parameters must follow cookie configuration rules for `prefix` property. As with `cookies.add()`, the expired cookie is added to cookies stack and written on `res.end()`.
 
 #### Syntax
