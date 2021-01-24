@@ -15,7 +15,7 @@ Cons
 
 # Benchmark
  * **Machine**: Windows 10 Pro 10.0.18363 Build 18363, Intel(R) Core(TM) i9-7900X CPU @ 3.30GHz, 3301 Mhz, 10 Core(s), 20 Logical Processor(s), 64GB RAM
- * **Method**:autocannon -c 100 -d 40 -p 10 http://localhost:3000/ (best avg score in 3 runs)
+ * **Method**: autocannon -c 100 -d 40 -p 10 http://localhost:3000/ (best avg score in 3 runs)
  * **Node**: 15.3.0
  * **Run**: Sun Jan 24 2021 14:12:10 
 
