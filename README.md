@@ -13,6 +13,23 @@ Pros
 Cons
 - Requires basic understanding of backend programming
 
+# Benchmark
+ * **Machine**: Windows 10 Pro 10.0.18363 Build 18363, Intel(R) Core(TM) i9-7900X CPU @ 3.30GHz, 3301 Mhz, 10 Core(s), 20 Logical Processor(s), 64GB RAM
+ * **Method**:autocannon -c 100 -d 40 -p 10 http://localhost:3000/ (best avg score in 3 runs)
+ * **Node**: 15.3.0
+ * **Run**: Sun Jan 24 2021 14:12:10 
+
+[Benchmark setup](https://github.com/md5login/wudu-server/blob/master/benchmarks/wudu-simple.js)
+   
+Comparing to leading frameworks with routing on the market (by corresponding setups):
+   
+
+| Framework   | Version | Requests/s |  Latency | Throughput/MB |
+|-----------  |---------|------------|----------|---------------|
+| wudu-server | 0.2.9 | 48101.6 | 20.49 | 8.27|
+| fastify | 3.10.1 | 43312.2 | 22.6 | 8.1|
+| express | 4.17.1 | 12856.2 | 77.24 | 2.4|
+
 # Prerequisites
 
 - NodeJS >= 15.3.0

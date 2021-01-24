@@ -1,8 +1,19 @@
 # Changelog
+- [v0.2.8](#v029)
+- [v0.2.4-8](#v024-8)
 - [v0.2.3](#v023)
 - [v0.2.2](#v022)
 - [v0.2.1](#v021)
 - [v0.2.0](#v020)
+
+
+### v0.2.9
+Performance improvement by
+ - Added Keep-Alive
+ - Multithreading
+
+### v0.2.4-8
+Docs revision
 
 ### v0.2.3
 Migration from GitLab to GitHub

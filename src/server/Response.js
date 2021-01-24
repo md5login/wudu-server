@@ -13,17 +13,18 @@ export default class Response extends http.ServerResponse {
     }
 
     json (obj, encoding = 'utf8') {
-        this.writeHead(200, {'Content-Type': 'application/json'});
-        this.end(JSON.stringify(obj), encoding);
+        let str = JSON.stringify(obj)
+        this.writeHead(200, {'Content-Type': 'application/json', 'Content-Length': str.length});
+        this.end(str, encoding);
     }
 
     text (str, encoding = 'utf8') {
-        this.writeHead(200, {'Content-Type': 'text/plain'});
+        this.writeHead(200, {'Content-Type': 'text/plain', 'Content-Length': str.length});
         this.end(str, encoding);
     }
 
     html (str, encoding = 'utf8') {
-        this.writeHead(200, {'Content-Type': 'text/html'});
+        this.writeHead(200, {'Content-Type': 'text/html', 'Content-Length': str.length});
         this.end(str, encoding);
     }
 

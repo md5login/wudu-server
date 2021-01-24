@@ -186,7 +186,7 @@ node index.js
 
 ## App
 ```javascript
-const myApp = new App('APP_NAME');
+const myApp = new App();
 ```
 
 ### Setting a router
@@ -214,7 +214,9 @@ const params = {
     protocol: {Server.HTTP|Server.HTTPS},
     port: Number|3000,
     listener: function (req, res) {},
-    options: ServerOptions
+    options: ServerOptions,
+    keepAliveTimeout: Number|5000,
+    cpus: Number|0 // how many CPUs to run the server on. By default (0) uses all available CPUs.
 };
 ```
 
