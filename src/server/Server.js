@@ -9,8 +9,12 @@ let server;
 let listener = (req, res) => res.end();
 let workers = [];
 
+
+/**
+ * @param {number} cpus
+ */
 const forkProcesses = cpus => {
-    let numCores = cpus || os.cpus().length;
+    let numCores = cpus > 0 ? cpus : os.cpus().length;
 
     for (let i = 0; i < numCores; ++i) {
         workers.push(cluster.fork());
@@ -21,6 +25,10 @@ const forkProcesses = cpus => {
         workers.push(cluster.fork());
     });
 };
+/**
+ *
+ * @param {ServerInitParams} initParams
+ */
 const runServer = initParams => {
     if (initParams.listener) listener = initParams.listener;
     let port;
@@ -43,13 +51,27 @@ const runServer = initParams => {
             port = 3000;
     }
     server.keepAliveTimeout = initParams.keepAliveTimeout || 5000;
+    port = initParams.port || port;
     server.listen(port);
 };
+
+/**
+ * @typedef {Object} ServerInitParams
+ * @property {RouteHandler} [listener]
+ * @property {ServerOptions} [options]
+ * @property {number} [cpus] - the amount of CPUs to run the server on. By default (0) runs on all available CPUs.
+ * @property {number} [keepAliveTimeout] - [see docs]{@link https://nodejs.org/api/http.html#http_server_keepalivetimeout}
+ * @property {number} [protocol] - 1 for HTTP, 2 for HTTPS, default 1
+ * @property {number} [port] - default 3000
+ */
 
 export default class Server {
     static HTTP = 1;
     static HTTPS = 2;
 
+    /**
+     * @param {ServerInitParams} initParams
+     */
     constructor (initParams = {}) {
         if (cluster.isMaster) {
             forkProcesses(initParams.cpus);

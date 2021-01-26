@@ -40,7 +40,44 @@ function createApi (fnName, ns) {
     return {method, url: processedUrl, pipes, fnName, urlLength: processedUrl.toString().length};
 }
 
+/**
+ * @typedef {Object} RouteApiObject
+ * @property {boolean} [static]
+ * @property {Function} [handler]
+ * @property {string} [fnName]
+ * @property {number} [urlLength]
+ * @property {ServeFileOptions} fileOptions
+ */
+
+/**
+ * @callback RouteHandler
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @return
+ */
+
+/**
+ * @callback RoutePipe
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @param {string} arg
+ * @return boolean
+ */
+
+/**
+ * @callback GlobalRoutePipe
+ * @param {IncomingMessage} req
+ * @param {ServerResponse} res
+ * @return boolean
+ */
+
+
 export default class Router {
+    /**
+     * @param {IncomingMessage} req
+     * @param {ServerResponse} res
+     * @return {Promise<void>}
+     */
     static async handler (req, res) {
         let parsedUrl = url.parse(req.url);
         let method = req.method.toUpperCase();
@@ -50,9 +87,12 @@ export default class Router {
         let bestApi;
         let groups = {};
         let gpipes = await Promise.all([...globalPipes].map(gpipe => gpipe(req, res)));
-        if (gpipes.some(gp => !gp) && !res.writableEnded) {
-            res.writeHead(403);
-            res.end(null);
+        if (gpipes.some(gp => !gp)) {
+            if (!res.writableEnded) {
+                res.writeHead(403);
+                res.end(null);
+            }
+            return;
         }
         for (let [route, apiObject] of routes.get(method).entries()) {
             let match = parsedUrl.pathname.match(route);
@@ -81,7 +121,14 @@ export default class Router {
         res.end();
     }
 
-    static handleStatic (req, res, apiObject) {
+    /**
+     *
+     * @param {IncomingMessage} req
+     * @param {ServerResponse} res
+     * @param {RouteApiObject=} opts
+     * @return {Promise<void>|void}
+     */
+    static handleStatic (req, res, opts = {}) {
         let acceptEncodings = req.headers['accept-encoding'].split(', ');
         let compression = 'none';
         if (acceptEncodings.includes('br')) {
@@ -90,25 +137,32 @@ export default class Router {
             compression = 'gzip';
         }
         let reqUrl = url.parse(req.url).pathname;
-        if (!apiObject.options.enableTraverse && reqUrl.includes('../')) {
-            res.writeHead(403);
-            return res.send(null);
-        }
-        return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...apiObject.options});
+        return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...opts.fileOptions});
     }
 
-    static addPipe (name, handler = (req, res, arg) => {}) {
+    /**
+     * Pipes are functions that get invoked prior to the route handler itself. If a pipe returns false, the request flow is stopped and 403 response is sent immediately.
+     * @param {string} name - name of the pipe to be used in routing definition.
+     * @param {RoutePipe} handler
+     */
+    static addPipe (name, handler) {
         customPipes.set(name, handler);
     }
 
-    static addGlobalPipe (handler = (req, res) => {}) {
+    /**
+     * @param {GlobalRoutePipe} handler -  A global routing pipe function controls the flow of any incoming request. If it returns false, response 403 is sent immediately.
+     */
+    static addGlobalPipe (handler) {
         globalPipes.add(handler);
     }
 
+    /**
+     * See docs for endpoint definition [here]{@link https://github.com/md5login/wudu-server/blob/master/docs/DOCS.md#defining-an-endpoint}
+     */
     static addEndpoints (...endpoints) {
         endpoints.forEach(ep => {
             let api = Object.getOwnPropertyNames(ep)
-                .filter(name => /^(get|post|put|patch|options|delete|trace|connect|head) .+/i.test(name))
+                .filter(name => /^(GET|POST|PUT|PATCH|OPTIONS|DELETE|TRACE|CONNECT|HEAD) .+/.test(name))
                 .map(url => createApi(url, getFullNamespace(ep)));
             api.forEach(route => {
                 if (!routes.has(route.method)) routes.set(route.method, new Map());
@@ -118,13 +172,20 @@ export default class Router {
         });
     }
 
-    static serveStatic (paths = [], options = {}) {
+    /**
+     * Add paths to be treated as static. Any request to a subpath of the given path will be served with a file server.
+     * Static paths have higher priority than other endpoints. Thus, when a static path is matched, no further route matching occurs.
+     * By default, uses compression accepted by the browser: br or gzip
+     * @param {string[]} paths
+     * @param {ServeFileOptions=} opts
+     */
+    static serveStatic (paths = [], opts = {}) {
         if (!routes.has('GET')) routes.set('GET', new Map());
         paths.forEach(p => {
             let route = new RegExp(path.normalize(p)
                 .replace(/\\/g, '/')
                 .replace(/\//g, '\\/'));
-            let apiObject = {static: true, handler: Router, fnName: 'handleStatic', options};
+            let apiObject = {static: true, handler: Router, fnName: 'handleStatic', fileOptions: opts};
             routes.get('GET').set(route, apiObject);
         });
     }

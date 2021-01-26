@@ -14,7 +14,21 @@ const findAll = function (buffer, match, offset = -1) {
     return result;
 }
 
+/**
+ * @typedef {Object} MultipartItem
+ * @property {boolean} isFile - whether the content of the payload section is a file
+ * @property {string} filename - if payload section is a file, this is the filename
+ * @property {string} paramName - name of the parameter in the payload section
+ * @property {Buffer} value - value of the payload section
+ * @property {object} headers - headers object of the payload section
+ * @property {string} contentType - shortcut to headers['content-type']
+ */
+
 export default class BodyParser {
+    /**
+     * @param {Buffer} headersBuffer
+     * @return {object}
+     */
     static #extractHeaders (headersBuffer) {
         let result = {};
         let str = headersBuffer.toString();
@@ -26,6 +40,11 @@ export default class BodyParser {
         return result;
     }
 
+    /**
+     *
+     * @param {Buffer} payload
+     * @return {object}
+     */
     static #processPayloadChunk (payload) {
         let result = {};
         let headersEnd = payload.indexOf(DOUBLE_CRLF);
@@ -91,6 +110,11 @@ export default class BodyParser {
         });
     }
 
+    /**
+     * @param {http.IncomingMessage} request
+     * @param {number} size - the maximum size of expected payload in bytes. Throws exception when exceeding.
+     * @return {Promise<MultipartItem[]>}
+     */
     static async getMultipart (request, size) {
         let payloadChunks = await this.#extractPayloadChunks(request, size);
         if (!payloadChunks || !payloadChunks.length) return [];

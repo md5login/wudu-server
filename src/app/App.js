@@ -1,17 +1,32 @@
 import Server from "../server/Server.js";
 
 export default class App {
-    #router = () => {};
+    /**
+     * @type {RouteHandler}
+     */
+    #router = (req, res) => {};
     #server;
 
-    set router (value) {
-        this.#router = value;
+    /**
+     *
+     * @param {RouteHandler} router
+     */
+    set router (router) {
+        this.#router = router;
     }
 
+    /**
+     * @return {Server}
+     */
     get server () {
         return this.#server;
     }
 
+    /**
+     *
+     * @param {ServerInitParams} initParams
+     * @return {Server}
+     */
     runServer (initParams) {
         this.#server = new Server({listener: this.#router, ...initParams});
         return this.#server;

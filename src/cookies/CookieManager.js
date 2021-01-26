@@ -1,6 +1,9 @@
 export class CookieReader {
     #cookies = {};
 
+    /**
+     * @param {string} cookieHeader
+     */
     constructor (cookieHeader) {
         if (!cookieHeader) return;
         let cookies = cookieHeader.trim().split(';');
@@ -10,64 +13,101 @@ export class CookieReader {
         }
     }
 
+    /**
+     *
+     * @return {object} - an object containing all the parsed cookies
+     */
     getAll () {
         return {...this.#cookies};
     }
 
-    get (name, prefix = '') {
+    /**
+     * @param {string} name
+     * @param {string=} prefix - if given, searches for the cookie ${prefix}-${name}. Otherwise, searches for any match by the following order: name, __Secure-name, __Host-name
+     * @return {(string|undefined)}
+     */
+    get (name, prefix) {
         if (!prefix) return this.#cookies[`${name}`] || this.#cookies[`__Secure-${name}`] || this.#cookies[`__Host-${name}`];
         if (prefix === 'none') return this.#cookies[name];
         return this.#cookies[`${prefix}-${name}`];
     }
 }
 
+/**
+ * @typedef {Object} CookieOptions - all the properties (excluding "prefix" and "session") correspond to generic cookie configuration
+ * @property {boolean} [session] - if true, zeros "maxAge" and "expires"
+ * @property {boolean} [httpOnly]
+ * @property {boolean} [secure]
+ * @property {('Lax'|'Strict'|'None')} [sameSite] - default Lax
+ * @property {string} [domain]
+ * @property {string} [path]
+ * @property {string} [expires]
+ * @property {string} [prefix] - a prefix to add before the cookie name. E.g. the prefix "-x" with the name "domain" will return cookie name "-x-domain"
+ * @property {number} [maxAge]
+ */
+
 export class CookieWriter {
     #response;
 
+    /**
+     * @param {Response} response
+     */
     constructor (response) {
         this.#response = response;
     }
 
-    create (name, value, conf) {
-        conf = {...conf};
-        if (conf.prefix) {
-            switch (conf.prefix) {
-                case 'host':
+    /**
+     *
+     * @param {string} name
+     * @param {string} value
+     * @param {CookieOptions?} opts
+     */
+    create (name, value, opts = {}) {
+        opts = {...opts};
+        if (opts.prefix) {
+            switch (opts.prefix) {
+                case '__Host':
                     name = `__Host-${name}`;
-                    conf.domain = '';
-                    conf.path = '/';
-                    conf.secure = true;
+                    opts.domain = '';
+                    opts.path = '/';
+                    opts.secure = true;
                     break;
-                case 'secure':
+                case '__Secure':
                     name = `__Secure-${name}`;
-                    conf.secure = true;
+                    opts.secure = true;
                     break;
                 default:
-                    name = `${conf.prefix}-${name}`;
+                    name = `${opts.prefix}-${name}`;
             }
         }
-        if (!conf.sameSite) conf.sameSite = 'Lax';
-        if (conf.session) {
-            conf.maxAge = 0;
-            conf.expires = 0;
+        if (!opts.sameSite) opts.sameSite = 'Lax';
+        if (opts.session) {
+            opts.maxAge = 0;
+            opts.expires = '';
         }
-        if (conf.sameSite === 'None') {
-            conf.secure = true;
+        if (opts.sameSite === 'None') {
+            opts.secure = true;
         }
         let cookie = [];
         cookie.push(`${encodeURIComponent(name)}=${encodeURIComponent(value)}`);
-        if (conf.secure) cookie.push('Secure');
-        if (conf.expires) cookie.push(`Expires=${conf.expires}`);
-        if (conf.maxAge) cookie.push(`Max-Age=${conf.maxAge}`);
-        if (conf.path) cookie.push(`Path=${conf.path}`);
-        if (conf.domain) cookie.push(`Domain=${conf.domain}`);
-        if (conf.httpOnly) cookie.push(`HttpOnly`);
-        if (conf.sameSite) cookie.push(`SameSite=${conf.sameSite}`);
+        if (opts.secure) cookie.push('Secure');
+        if (opts.expires) cookie.push(`Expires=${opts.expires}`);
+        if (opts.maxAge) cookie.push(`Max-Age=${opts.maxAge}`);
+        if (opts.path) cookie.push(`Path=${opts.path}`);
+        if (opts.domain) cookie.push(`Domain=${opts.domain}`);
+        if (opts.httpOnly) cookie.push(`HttpOnly`);
+        if (opts.sameSite) cookie.push(`SameSite=${opts.sameSite}`);
         return cookie.join('; ');
     }
 
-    add (name, value, conf = {}) {
-        let cookie = this.create(name, value, conf);
+    /**
+     *
+     * @param {string} name
+     * @param {string} value
+     * @param {CookieOptions?} opts
+     */
+    add (name, value, opts = {}) {
+        let cookie = this.create(name, value, opts);
         let existing = this.#response.getHeader('Set-Cookie');
         if (typeof existing === 'string') existing = [existing];
         else if (!existing) existing = [];
@@ -75,7 +115,12 @@ export class CookieWriter {
         this.#response.setHeader('Set-Cookie', existing);
     }
 
-    expire (cookieName, prefix = '') {
-        this.add(cookieName, '', {prefix, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});
+    /**
+     *
+     * @param {string} name - the name of the cookie to expire
+     * @param {string=} prefix - a prefix to add before the cookie name. E.g. the prefix "-x" with the name "domain" will expire cookie name "-x-domain"
+     */
+    expire (name, prefix = '') {
+        this.add(name, '', {prefix, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});
     }
 }

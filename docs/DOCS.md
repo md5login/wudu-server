@@ -430,10 +430,15 @@ Allows adding static paths to be served automatically.
 ```javascript
 // default serveStatic options:
 let options = {
-    ifModifiedSince: '', // corresponds to browser's If-Modified-Since header
+    ifModifiedSince: '', // used in case you want to responde with 304 for non-modified file
     compression: 'none|gzip|br', // by default corresponds to browser's Accept-Encoding header
-    enableTraverse: false, // whether to allow '../' in requests,
-    root: '' // root dir to serve static files from
+    enableTraverse: false, // whether to allow '../' in file serving,
+    root: '', // root dir to serve static files from
+    headers: {},
+    readOptions: {  
+        encoding, // BufferEncoding
+        flag // 'r' default
+    }
 };
 Router.serveStatic([path1, path2, ...], options);
 ```
@@ -656,7 +661,7 @@ class UserEndpoint {
     }
     static ['POST /login'] (req, res) {
         ...
-        res.cookies.add('user', userData, {prefix: 'host'});
+        res.cookies.add('user', userData, {prefix: '__Host'});
     }
 }
 ```
@@ -726,7 +731,7 @@ let configuration = {
     path: 'string', // Path; default ''
     domain: 'string', // Domain; default ''
     sameSite: 'Lax|Strict|None', // default 'Lax'
-    prefix: 'host|secure|any', // default ''
+    prefix: 'any', // default ''
     session: true || false // if true, maxAge and expires are omitted
 };
 ```
@@ -738,10 +743,10 @@ configuration.prefix = '-x';
 
 // this will create a '__Host-' prefix with all the required properties redefined automatically:
 // for better understanding, read https://tools.ietf.org/html/draft-west-cookie-prefixes-05
-configuration.prefix = 'host';
+configuration.prefix = '__Host';
 
 // this will create a '__Secure-' prefix accordingly:
-configuration.prefix = 'secure';
+configuration.prefix = '__Secure';
 ```
 
 
@@ -756,7 +761,7 @@ res.cookies.create(cookieName, value, configuration = {});
 let c1 = res.cookies.create('user', 'user_data', {prefix: '-x'});
 c1 === '-x-user=user_data';
 
-let c2 = res.cookies.create('user', 'secured_user_data', {predix: 'secure'});
+let c2 = res.cookies.create('user', 'secured_user_data', {predix: '__Secure'});
 c2 === '__Secure-user=secured-user-data; Secure';
 
 let c3 = res.cookies.create('user', 'data', {
@@ -780,7 +785,7 @@ res.cookies.add(cookieName, value, configuration = {});
 #### Example
 ```js
 // creates and stores the cookie '__Host-user=secured_data; Secure; Path=/':
-res.cookies.add('user', 'secured_data', {prefix: 'host'});
+res.cookies.add('user', 'secured_data', {prefix: '__Host'});
 // creates and stores the cookie 'user=data; HttpOnly':
 res.cookies.add('user', 'data', {httpOnly: true});
 // previously added cookies are written to the response head here:
@@ -800,7 +805,7 @@ res.cookies.expire(cookieName, prefix = '');
 // adds '-x-user=; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
 res.cookies.expire('user', '-x');
 // adds '__Host-user=; Secure; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
-res.cookies.expire('user', 'host');
+res.cookies.expire('user', '__Host');
 // previously added cookies are written to the response head here:
 res.end();
 ```

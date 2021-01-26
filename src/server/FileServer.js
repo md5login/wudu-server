@@ -3,6 +3,22 @@ import zlib from "zlib";
 import path from 'path';
 import MimeTypes from "./MimeTypes.js";
 
+/**
+ * @typedef {Object} FileReadOptions
+ * @property {BufferEncoding} [encoding]
+ * @property {OpenMode} [flag]
+ */
+
+/**
+ * @typedef {Object} ServeFileOptions
+ * @property {string} [ifModifiedSince] - used to respond with 304 for not modified files
+ * @property {('br'|'gzip'|'none')} [compression] - what type of compression to apply before serving
+ * @property {string} [root] - root path to search the file path in
+ * @property {object} [headers] - headers to be sent
+ * @property {boolean} [enableTravers] - whether to enable serving path with '../'. default false
+ * @property {FileReadOptions} [readOptions]
+ */
+
 export default class FileServer {
     static bufferToBrotli (buff) {
         return new Promise((resolve, reject) => {
@@ -20,25 +36,27 @@ export default class FileServer {
             });
         });
     }
-    static streamFile (filePath, stream, options = {}) {
-        // if (stream.closed || stream.destroyed) return;
-        // try {
-        //     stream.on('error', e => {});
-        //     stream.respond(headers);
-        //     if (buffer) {
-        //         stream.write(buffer, err => {
-        //             if (err) throw err;
-        //             stream.end();
-        //         });
-        //     } else {
-        //         stream.end();
-        //     }
-        // } catch (e) {}
 
-    }
+    /**
+     *
+     * @param {string} filePath
+     * @param {ServerResponse} response
+     * @param {ServeFileOptions=} options
+     * @return {Promise<void>}
+     */
     static async serveFile (filePath, response, options = {}) {
+        if (!options.enableTravers && filePath.includes('../')) {
+            response.writeHead(403);
+            response.end(null);
+            return;
+        }
         filePath = path.join(options.root || '', filePath);
-        let stat = await fs.promises.stat(filePath);
+        let stat = await fs.promises.stat(filePath).catch(e => {});
+        if (!stat) {
+            response.writeHead(404);
+            response.end(null);
+            return;
+        }
         if (options.ifModifiedSince && stat) {
             if (options.ifModifiedSince === new Date(stat.mtime).toUTCString()) {
                 response.writeHead(304);
@@ -46,7 +64,7 @@ export default class FileServer {
                 return;
             }
         }
-        let file = await fs.promises.readFile(filePath);
+        let file = await fs.promises.readFile(filePath, options.readOptions);
         let mime = FileServer.getMimeTypeByName(filePath);
         let headers = {
             'Content-Type': mime,
