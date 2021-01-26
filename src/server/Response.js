@@ -28,8 +28,9 @@ export default class Response extends http.ServerResponse {
      * @param {BufferEncoding} encoding
      */
     json (obj, encoding = 'utf8') {
-        let str = JSON.stringify(obj)
-        this.writeHead(200, {'Content-Type': 'application/json', 'Content-Length': str.length});
+        let str = JSON.stringify(obj);
+        let length = Buffer.byteLength(str, encoding);
+        this.writeHead(200, {'Content-Type': 'application/json', 'Content-Length': length});
         this.end(str, encoding);
     }
 
@@ -39,7 +40,8 @@ export default class Response extends http.ServerResponse {
      * @param {BufferEncoding} encoding
      */
     text (str, encoding = 'utf8') {
-        this.writeHead(200, {'Content-Type': 'text/plain', 'Content-Length': str.length});
+        let length = Buffer.byteLength(str, encoding);
+        this.writeHead(200, {'Content-Type': 'text/plain', 'Content-Length': length});
         this.end(str, encoding);
     }
 
@@ -49,7 +51,8 @@ export default class Response extends http.ServerResponse {
      * @param {BufferEncoding} encoding
      */
     html (str, encoding = 'utf8') {
-        this.writeHead(200, {'Content-Type': 'text/html', 'Content-Length': str.length});
+        let length = Buffer.byteLength(str, encoding);
+        this.writeHead(200, {'Content-Type': 'text/html', 'Content-Length': length});
         this.end(str, encoding);
     }
 

@@ -1,4 +1,5 @@
 # Changelog
+- [v0.2.11](#v0211)
 - [v0.2.10](#v0210)
 - [v0.2.9](#v029)
 - [v0.2.4-8](#v024-8)
@@ -6,6 +7,11 @@
 - [v0.2.2](#v022)
 - [v0.2.1](#v021)
 - [v0.2.0](#v020)
+
+### v0.2.11
+#### Fixes
+ - Content-Length for textual responses
+
 
 ### v0.2.10
  - JSDocs added
