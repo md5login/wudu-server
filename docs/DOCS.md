@@ -761,7 +761,7 @@ res.cookies.create(cookieName, value, configuration = {});
 let c1 = res.cookies.create('user', 'user_data', {prefix: '-x'});
 c1 === '-x-user=user_data';
 
-let c2 = res.cookies.create('user', 'secured_user_data', {predix: '__Secure'});
+let c2 = res.cookies.create('user', 'secured_user_data', {prefix: '__Secure'});
 c2 === '__Secure-user=secured-user-data; Secure';
 
 let c3 = res.cookies.create('user', 'data', {
