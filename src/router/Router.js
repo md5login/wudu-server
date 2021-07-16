@@ -78,7 +78,7 @@ export default class Router {
      * @return {Promise<void>}
      */
     static async handler (req, res) {
-        let parsedUrl = new URL(req.url);
+        let parsedUrl = Router.#getParsedUrl(req);
         let method = req.method.toUpperCase();
         req.remoteAddress = req.socket.remoteAddress.split(':').pop();
         if (!routes.has(method)) return res.end('');
@@ -135,8 +135,13 @@ export default class Router {
         } else if (acceptEncodings.includes('gzip')) {
             compression = 'gzip';
         }
-        let reqUrl = new URL(req.url).pathname;
+        let reqUrl = Router.#getParsedUrl(req).pathname;
         return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...opts.fileOptions});
+    }
+
+    static #getParsedUrl (req) {
+        let protocol = typeof req.socket.getPeerCertificate === 'function' ? 'https' : 'http';
+        return new URL(req.url, `${protocol}://${req.headers.host}`);
     }
 
     /**
