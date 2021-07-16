@@ -14,7 +14,7 @@ let workers = [];
  * @param {number} cpus
  */
 const forkProcesses = cpus => {
-    let numCores = cpus > 0 ? cpus : os.cpus().length;
+    let numCores = cpus > 0 ? cpus : os.cpus().length / 2;
 
     for (let i = 0; i < numCores; ++i) {
         workers.push(cluster.fork());

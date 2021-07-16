@@ -1,5 +1,4 @@
 import path from 'path';
-import url from 'url';
 import FileServer from "../server/FileServer.js";
 import querystring from 'querystring';
 
@@ -74,14 +73,14 @@ function createApi (fnName, ns) {
 
 export default class Router {
     /**
-     * @param {IncomingMessage} req
+     * @param {Partial<IncomingMessage>} req
      * @param {ServerResponse} res
      * @return {Promise<void>}
      */
     static async handler (req, res) {
-        let parsedUrl = url.parse(req.url);
+        let parsedUrl = new URL(req.url);
         let method = req.method.toUpperCase();
-        let ip = req.socket.remoteAddress.split(':').pop();
+        req.remoteAddress = req.socket.remoteAddress.split(':').pop();
         if (!routes.has(method)) return res.end('');
         let bestMatch = '';
         let bestApi;
@@ -129,14 +128,14 @@ export default class Router {
      * @return {Promise<void>|void}
      */
     static handleStatic (req, res, opts = {}) {
-        let acceptEncodings = req.headers['accept-encoding'].split(', ');
+        let acceptEncodings = (req.headers['accept-encoding'] || '').split(', ');
         let compression = 'none';
         if (acceptEncodings.includes('br')) {
             compression = 'br';
         } else if (acceptEncodings.includes('gzip')) {
             compression = 'gzip';
         }
-        let reqUrl = url.parse(req.url).pathname;
+        let reqUrl = new URL(req.url).pathname;
         return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...opts.fileOptions});
     }
 
