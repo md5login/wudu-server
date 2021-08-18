@@ -118,9 +118,9 @@ export class CookieWriter {
     /**
      *
      * @param {string} name - the name of the cookie to expire
-     * @param {string=} prefix - a prefix to add before the cookie name. E.g. the prefix "-x" with the name "domain" will expire cookie name "-x-domain"
+     * @param {CookieOptions=} options - the "expires" option will be overridden inside this method
      */
-    expire (name, prefix = '') {
-        this.add(name, '', {prefix, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});
+    expire (name, options = {}) {
+        this.add(name, '', {...options, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});
     }
 }

@@ -793,19 +793,19 @@ res.end();
 ```
 
 ### Response.cookies.expire()
-Creates an 'expired' cookie, making the client delete it. If given, the `prefix` parameters must follow cookie configuration rules for `prefix` property. As with `cookies.add()`, the expired cookie is added to cookies stack and written on `res.end()`.
+Creates an 'expired' cookie, making the client delete it. You can pass options optionally. `options.expire` will be overridden by this method. As with `cookies.add()`, the expired cookie is added to cookies stack and written on `res.end()`.
 
 #### Syntax
 ```js
-res.cookies.expire(cookieName, prefix = '');
+res.cookies.expire(cookieName, options = {});
 ```
 
 #### Example
 ```js
-// adds '-x-user=; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
-res.cookies.expire('user', '-x');
+// adds 'user=; Secure; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
+res.cookies.expire('user', {secure: true});
 // adds '__Host-user=; Secure; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT' cookie to cookie stack:
-res.cookies.expire('user', '__Host');
+res.cookies.expire('user', {prefix: '__Host'});
 // previously added cookies are written to the response head here:
 res.end();
 ```

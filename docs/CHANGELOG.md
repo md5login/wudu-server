@@ -1,4 +1,5 @@
 # Changelog
+- [v0.2.14](#v0214)
 - [v0.2.11](#v0211)
 - [v0.2.10](#v0210)
 - [v0.2.9](#v029)
@@ -7,6 +8,10 @@
 - [v0.2.2](#v022)
 - [v0.2.1](#v021)
 - [v0.2.0](#v020)
+
+### v0.2.14
+#### Changes
+ - `res.cookies.expire` now accepts `CookieOptions` parameter
 
 ### v0.2.11
 #### Fixes
