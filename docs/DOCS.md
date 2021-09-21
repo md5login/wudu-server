@@ -56,6 +56,7 @@
     * [Defining an Endpoint](#defining-an-endpoint)
         + [Endpoint Methods Naming Convention](#endpoint-methods-naming-convention)
         + [PATHNAME Parameters](#pathname-parameters)
+          + [Optional Parameters](#optional-parameters)
         + [Supporting Async Methods](#supporting-async-methods)
         + [Query Params](#query-params)
     * [Routing Pipes](#routing-pipes)
@@ -541,6 +542,19 @@ class IndexEndpoint {
     static ['POST /unix-time/:location/:rfc'] (req, res) {
         res.json({
             time: getTimeByLocation(req.params.location, req.params.rfc)
+        });
+    }
+}
+```
+
+#### Optional parameters
+
+```javascript
+class IndexEndpoint {    
+    // serve POST request to /unix-time/London/RFC3339
+    static ['POST /unix-time/:location/:?rfc'] (req, res) {
+        res.json({
+            time: getTimeByLocation(req.params.location, req.params?.rfc)
         });
     }
 }

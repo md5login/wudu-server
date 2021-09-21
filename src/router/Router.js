@@ -10,6 +10,7 @@ function processEndpointUrl (url) {
     url = new RegExp('^' + url
         .replace(/\\/g, '/') // replace windows path
         .replace(/\/:(\w+)/g, (full, match) => `\/(?<${match}>[^?#\/]+)`)
+        .replace(/\/:\?(\w+)/g, (full, match) => `\/(?<${match}>[^?#\/]+)?`)
         .replace(/\//g, '\\/'));
     return url
 }
