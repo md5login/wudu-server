@@ -50,6 +50,12 @@ const runServer = initParams => {
             }, (...a) => listener(...a));
             port = 3000;
     }
+    if (initParams.redirectToHttps && initParams.protocol === Server.HTTPS) {
+        http.createServer(function (req, res) {
+            res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+            res.end();
+        }).listen(80);
+    }
     server.keepAliveTimeout = initParams.keepAliveTimeout || 5000;
     port = initParams.port || port;
     server.listen(port);
