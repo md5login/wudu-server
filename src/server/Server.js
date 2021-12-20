@@ -73,7 +73,7 @@ export default class Server {
      * @param {ServerInitParams} initParams
      */
     constructor (initParams = {}) {
-        if (cluster.isMaster) {
+        if (cluster.isMaster && initParams.fork) {
             forkProcesses(initParams.cpus);
         } else {
             runServer(initParams);
