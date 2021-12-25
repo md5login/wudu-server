@@ -58,8 +58,9 @@ export default class FileServer {
 
         if (options.localCache) {
             if (localCache.has(filePath)) {
-                response.writeHead(200);
-                response.end(localCache.get(filePath));
+                const {headers, file} = localCache.get(filePath);
+                response.writeHead(200, headers);
+                response.end(localCache.get(file));
                 return;
             }
         }
@@ -98,7 +99,7 @@ export default class FileServer {
                 break;
         }
         if (options.localCache) {
-            localCache.set(filePath, file);
+            localCache.set(filePath, {headers, file});
         }
         headers['Content-Length'] = file.length;
         response.writeHead(200, headers);
