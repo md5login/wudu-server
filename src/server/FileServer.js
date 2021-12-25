@@ -98,10 +98,10 @@ export default class FileServer {
                 headers['Content-Encoding'] = options.compression;
                 break;
         }
+        headers['Content-Length'] = file.length;
         if (options.localCache) {
             localCache.set(filePath, {headers, file});
         }
-        headers['Content-Length'] = file.length;
         response.writeHead(200, headers);
         response.end(file);
     }
