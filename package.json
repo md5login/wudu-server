@@ -1,6 +1,6 @@
 {
   "name": "wudu-server",
-  "version": "0.2.16",
+  "version": "0.2.18",
   "description": "NodeJS backend framework to make things easier",
   "main": "wudu-server.js",
   "type": "module",
@@ -16,10 +16,5 @@
   "bugs": {
     "url": "https://github.com/md5login/wudu-server/issues"
   },
-  "homepage": "https://github.com/md5login/wudu-server",
-  "devDependencies": {
-    "@types/node": "^15.3.0",
-    "typescript": "^4.3.5"
-  },
-  "dependencies": {}
+  "homepage": "https://github.com/md5login/wudu-server"
 }
