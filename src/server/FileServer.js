@@ -60,7 +60,7 @@ export default class FileServer {
             if (localCache.has(filePath)) {
                 const {headers, file} = localCache.get(filePath);
                 response.writeHead(200, headers);
-                response.end(localCache.get(file));
+                response.end(file);
                 return;
             }
         }
