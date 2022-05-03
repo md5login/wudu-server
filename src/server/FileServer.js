@@ -1,7 +1,9 @@
 import fs from 'fs';
-import zlib from "zlib";
+import zlib from 'zlib';
 import path from 'path';
-import MimeTypes from "./MimeTypes.js";
+import MimeTypes from './MimeTypes.js';
+
+const localCache = new Map();
 
 /**
  * @typedef {Object} FileReadOptions
@@ -16,6 +18,7 @@ import MimeTypes from "./MimeTypes.js";
  * @property {string} [root] - root path to search the file path in
  * @property {object} [headers] - headers to be sent
  * @property {boolean} [enableTravers] - whether to enable serving path with '../'. default false
+ * @property {boolean} [localCache] - if true, created runtime files map and caches requested files
  * @property {FileReadOptions} [readOptions]
  */
 
@@ -28,6 +31,7 @@ export default class FileServer {
             });
         });
     }
+
     static bufferToGzip (buff) {
         return new Promise((resolve, reject) => {
             zlib.gzip(buff, (err, buff) => {
@@ -51,7 +55,18 @@ export default class FileServer {
             return;
         }
         filePath = path.join(options.root || '', filePath);
-        let stat = await fs.promises.stat(filePath).catch(e => {});
+
+        if (options.localCache) {
+            if (localCache.has(filePath)) {
+                const {headers, file} = localCache.get(filePath);
+                response.writeHead(200, headers);
+                response.end(file);
+                return;
+            }
+        }
+
+        let stat = await fs.promises.stat(filePath).catch(e => {
+        });
         if (!stat) {
             response.writeHead(404);
             response.end(null);
@@ -84,9 +99,13 @@ export default class FileServer {
                 break;
         }
         headers['Content-Length'] = file.length;
+        if (options.localCache) {
+            localCache.set(filePath, {headers, file});
+        }
         response.writeHead(200, headers);
         response.end(file);
     }
+
     static getMimeTypeByName (filename) {
         let ext = path.extname(filename).replace('.', '');
         return MimeTypes[ext] || 'application/octet-stream';
