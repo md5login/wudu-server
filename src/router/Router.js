@@ -129,15 +129,17 @@ export default class Router {
      * @return {Promise<void>|void}
      */
     static handleStatic (req, res, opts = {}) {
-        let acceptEncodings = (req.headers['accept-encoding'] || '').split(', ');
-        let compression = 'none';
-        if (acceptEncodings.includes('br')) {
-            compression = 'br';
-        } else if (acceptEncodings.includes('gzip')) {
-            compression = 'gzip';
+        if (!opts.fileOptions.compression) {
+            let acceptEncodings = (req.headers['accept-encoding'] || '').split(', ');
+            opts.fileOptions.compression = 'none';
+            if (acceptEncodings.includes('br')) {
+                opts.fileOptions.compression = 'br';
+            } else if (acceptEncodings.includes('gzip')) {
+                opts.fileOptions.compression = 'gzip';
+            }
         }
         let reqUrl = Router.#getParsedUrl(req).pathname;
-        return FileServer.serveFile(reqUrl, res, {compression, ifModifiedSince: req.headers['if-modified-since'], ...opts.fileOptions});
+        return FileServer.serveFile(reqUrl, res, opts.fileOptions);
     }
 
     static #getParsedUrl (req) {
