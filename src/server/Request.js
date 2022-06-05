@@ -45,7 +45,6 @@ export default class Request extends http.IncomingMessage {
                 .on('end', () => {
                     if (abort) return;
                     this.#body = Buffer.concat(chunks);
-                    console.log(maxLength, bufferSize);
                     resolve(this.#body);
                 })
                 .on('error', reject)
