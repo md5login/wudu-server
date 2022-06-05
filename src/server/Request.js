@@ -37,7 +37,6 @@ export default class Request extends http.IncomingMessage {
                 bufferSize += data.length;
                 if (bufferSize <= maxLength) {
                     this.#body = Buffer.concat(chunks);
-                    resolve(this.#body);
                 } else {
                     abort = true;
                     reject('too large');
@@ -46,6 +45,7 @@ export default class Request extends http.IncomingMessage {
                 .on('end', () => {
                     if (abort) return;
                     this.#body = Buffer.concat(chunks);
+                    console.log(maxLength, bufferSize);
                     resolve(this.#body);
                 })
                 .on('error', reject)
