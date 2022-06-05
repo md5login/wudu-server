@@ -35,7 +35,7 @@ export default class Request extends http.IncomingMessage {
                 if (abort) return;
                 chunks.push(data);
                 bufferSize += data.length;
-                if (bufferSize >= maxLength) {
+                if (bufferSize <= maxLength) {
                     this.#body = Buffer.concat(chunks);
                     resolve(this.#body);
                 } else {
