@@ -38,7 +38,7 @@ const runServer = initParams => {
                 IncomingMessage: Request,
                 ServerResponse: Response,
                 ...initParams.options
-            }, (...a) => listener(...a));
+            }, listener);
             port = 443;
             break;
         case Server.HTTP:
@@ -47,7 +47,7 @@ const runServer = initParams => {
                 IncomingMessage: Request,
                 ServerResponse: Response,
                 ...initParams.options
-            }, (...a) => listener(...a));
+            }, listener);
             port = 3000;
     }
     if (initParams.redirectToHttps && initParams.protocol === Server.HTTPS) {
@@ -79,7 +79,7 @@ export default class Server {
      * @param {ServerInitParams} initParams
      */
     constructor (initParams = {}) {
-        if (cluster.isMaster && initParams.fork) {
+        if (cluster.isPrimary && initParams.fork) {
             forkProcesses(initParams.cpus);
         } else {
             runServer(initParams);
