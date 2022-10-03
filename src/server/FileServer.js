@@ -12,6 +12,12 @@ const localCache = new Map();
  */
 
 /**
+ * @typedef {Object} ETag
+ * @property {Function=} validator
+ * @property {Function=} generator
+ */
+
+/**
  * @typedef {Object} ServeFileOptions
  * @property {string} [ifModifiedSince] - used to respond with 304 for not modified files
  * @property {('br'|'gzip'|'none')} [compression] - what type of compression to apply before serving
@@ -20,6 +26,7 @@ const localCache = new Map();
  * @property {boolean} [enableTravers] - whether to enable serving path with '../'. default false
  * @property {boolean} [localCache] - if true, created runtime files map and caches requested files
  * @property {FileReadOptions} [readOptions]
+ * @property {ETag=} etag
  */
 
 export default class FileServer {
@@ -46,15 +53,31 @@ export default class FileServer {
      * @param {string} filePath
      * @param {ServerResponse} response
      * @param {ServeFileOptions=} options
+     * @param {IncomingMessage} req
      * @return {Promise<void>}
      */
-    static async serveFile (filePath, response, options = {}) {
+    static async serveFile (filePath, response, options = {}, req) {
         if (!options.enableTravers && filePath.includes('../')) {
             response.writeHead(403);
             response.end(null);
             return;
         }
         filePath = path.join(options.root || '', filePath);
+
+        let headers = {
+            ...(options.headers || {})
+        };
+
+        if (options.etag) {
+            if (req.headers['if-none-match']) {
+                if (options.etag.validator?.(filePath, req.headers['if-none-match'])) {
+                    response.writeHead(304);
+                    response.end(null);
+                    return;
+                }
+            }
+            headers.etag = options.etag.generator?.(filePath);
+        }
 
         if (options.localCache) {
             if (localCache.has(filePath)) {
@@ -72,6 +95,7 @@ export default class FileServer {
             response.end(null);
             return;
         }
+
         if (options.ifModifiedSince && stat) {
             if (options.ifModifiedSince === new Date(stat.mtime).toUTCString()) {
                 response.writeHead(304);
@@ -80,12 +104,10 @@ export default class FileServer {
             }
         }
         let file = await fs.promises.readFile(filePath, options.readOptions);
-        let mime = FileServer.getMimeTypeByName(filePath);
-        let headers = {
-            'Content-Type': mime,
-            'Last-Modified': new Date(stat.mtime).toUTCString(),
-            ...(options.headers || {})
-        };
+
+        headers['Content-Type'] = FileServer.getMimeTypeByName(filePath);
+        headers['Last-Modified'] = new Date(stat.mtime).toUTCString();
+
         switch (options.compression) {
             case 'none':
                 break;

@@ -139,7 +139,7 @@ export default class Router {
             }
         }
         let reqUrl = Router.#getParsedUrl(req).pathname;
-        return FileServer.serveFile(reqUrl, res, opts.fileOptions);
+        return FileServer.serveFile(reqUrl, res, opts.fileOptions, req);
     }
 
     static #getParsedUrl (req) {
