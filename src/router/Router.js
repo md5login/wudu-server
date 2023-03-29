@@ -189,9 +189,14 @@ export default class Router {
     static serveStatic (paths = [], opts = {}) {
         if (!routes.has('GET')) routes.set('GET', new Map());
         paths.forEach(p => {
-            let route = new RegExp(path.normalize(p)
-                .replace(/\\/g, '/')
-                .replace(/\//g, '\\/'));
+            let route;
+            if (p instanceof RegExp) {
+                route = p;
+            } else {
+                route = new RegExp(path.normalize(p)
+                    .replace(/\\/g, '/')
+                    .replace(/\//g, '\\/'));
+            }
             let apiObject = {static: true, handler: Router, fnName: 'handleStatic', fileOptions: opts};
             routes.get('GET').set(route, apiObject);
         });
