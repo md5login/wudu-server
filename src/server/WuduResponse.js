@@ -6,7 +6,7 @@ export default class WuduResponse extends http.ServerResponse {
     #cookies;
 
     /**
-     * @param {Request} req
+     * @param {http.IncomingMessage} req
      */
     constructor (req) {
         super(req);

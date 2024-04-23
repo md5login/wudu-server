@@ -8,7 +8,7 @@ const localCache = new Map();
 /**
  * @typedef {Object} FileReadOptions
  * @property {BufferEncoding} [encoding]
- * @property {OpenMode} [flag]
+ * @property {fs.OpenMode} [flag]
  */
 
 /**
@@ -53,7 +53,7 @@ export default class FileServer {
      * @param {string} filePath
      * @param {ServerResponse} response
      * @param {ServeFileOptions} [options]
-     * @param {IncomingMessage} req
+     * @param {IncomingMessage} [req]
      * @return {Promise<void>}
      */
     static async serveFile (filePath, response, options = {}, req) {

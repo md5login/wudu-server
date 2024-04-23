@@ -131,7 +131,7 @@ export default class Router {
      *
      * @param {IncomingMessage} req
      * @param {ServerResponse} res
-     * @param {RouteApiObject=} opts
+     * @param {RouteApiObject} [opts]
      * @return {Promise<void>|void}
      */
     static handleStatic (req, res, opts = {}) {

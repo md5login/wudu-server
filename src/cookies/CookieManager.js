@@ -50,7 +50,7 @@ export class CookieWriter {
     #response;
 
     /**
-     * @param {Response} response
+     * @param {ServerResponse} response
      */
     constructor (response) {
         this.#response = response;
