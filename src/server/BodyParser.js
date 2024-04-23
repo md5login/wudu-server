@@ -102,11 +102,11 @@ export default class BodyParser {
                     let result = [];
                     // push only the relevant payload without boundaries
                     for (let i = 0; i < indices.length - 1;) {
-                        result.push(payload.slice(indices[i] + boundary.length + 2, indices[++i]));
+                        result.push(payload.subarray(indices[i] + boundary.length + 2, indices[++i]));
                     }
                     resolve(result);
                 })
-                .on('error', reject);
+                .on('error', () => {});
         });
     }
 

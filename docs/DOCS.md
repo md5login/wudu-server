@@ -12,7 +12,7 @@
         + [Starting a server](#starting-a-server)
     * [Server](#server)
         + [params](#params)
-    * [Request](#request)
+    * [WuduRequest](#wudurequest)
         + [.MAX_PAYLOAD_SIZE](#max-payload-size)
         + [.cookies](#cookies)
         + [.body()](#body)
@@ -23,7 +23,8 @@
             - [Syntax](#syntax-1)
             - [Example](#example-1)
             - [Exceptions](#exceptions-1)
-        + [.map()](#map)
+        + [.map()](#map) [deprecated]
+        + [.toMap()](#tomap)
             - [Syntax](#syntax-2)
             - [Example](#example-2)
             - [Exceptions](#exceptions-2)
@@ -31,7 +32,7 @@
             - [Syntax](#syntax-3)
             - [Example](#example-3)
             - [Exceptions](#exceptions-3)
-    * [Response](#response)
+    * [WuduResponse](#wuduresponse)
         + [.cookies](#cookies-1)
         + [.file()](#file)
             - [Syntax](#syntax-4)
@@ -224,17 +225,17 @@ const params = {
 Default `params.options`:
 ```javascript
 let options = {
-    IncomingMessage: Request,
-    ServerResponse: Response,
+    IncomingMessage: WuduRequest,
+    ServerResponse: WuduResponse,
     ...params.options
 }
 ```
 These options are passed to the corresponding server initializer based on the selected protocol.
 
-## Request
+## WuduRequest
 This class extends `http.IncomingMessage` with some additional functionality.
 ```javascript
-class Request extends http.IncomingMessage
+class WuduRequest extends http.IncomingMessage
 ```
 
 ### .MAX_PAYLOAD_SIZE
@@ -242,7 +243,7 @@ Static property that limits payload size for requests with a payload. Default is
 >**Important!** Overriding this value will affect all requests.
 
 ### .cookies
-An interface to read cookies. See `Request.cookies` section under **Cookie Management**.
+An interface to read cookies. See `WuduRequest.cookies` section under **Cookie Management**.
 
 ### .body()
 Get the payload body as a `Buffer` asynchronously.
@@ -267,7 +268,7 @@ class DataEndpoint {
 Get the payload body and parse it into an object asynchronously.
 #### Syntax
 ```js
-await req.json(size = Request.MAX_PAYLOAD_SIZE);
+await req.json(size = WuduRequest.MAX_PAYLOAD_SIZE);
 ```
 #### Example
 ```js
@@ -283,17 +284,21 @@ class DataEndpoint {
 - Buffer grows larger than `size` (throws 'too large')
 
 ### .map()
-Get the payload body and parse it into an object by given separator and delimiter asynchronously. Defaults are: `sep = '&'`, `del = '='`, `size = Request.MAX_PAYLOAD_SIZE`
+> **Deprecated!** Use `.toMap()` instead.
+
+### .toMap()
+
+Get the payload body and parse it into an object by given separator and delimiter asynchronously. Defaults are: `sep = '&'`, `del = '='`, `size = WuduRequest.MAX_PAYLOAD_SIZE`
 #### Syntax
 ```js
-await req.map(sep = '&', del = '=', size = Request.MAX_PAYLOAD_SIZE);
+await req.toMap(sep = '&', del = '=', size = WuduRequest.MAX_PAYLOAD_SIZE);
 ```
 #### Example
 ```js
 class DataEndpoint {
     static async ['POST /data'] (req, res) {
         // given that the payload is 'foo=bar&answer=42'
-        let userObj = await req.map();
+        let userObj = await req.toMap();
         userObj === {
             foo: 'bar',
             answer: '42'
@@ -333,11 +338,11 @@ class UploadEndpoint {
 - Content-Length is larger than `size` (throws 'too large')
 - Buffer grows larger than `size` (throws 'too large')
 
-## Response
+## WuduResponse
 This class extends `http.ServerResponse` with some additional functionality.
 
 ### .cookies
-An interface to write cookies. See `Response.cookies` section under **Cookie Management**.
+An interface to write cookies. See `WuduResponse.cookies` section under **Cookie Management**.
 
 ### .file()
 Respond with a file, while corresponding MIME type is sent automatically.
