@@ -30,6 +30,11 @@ const localCache = new Map();
  */
 
 export default class FileServer {
+    /**
+     * Compresses a buffer using Brotli
+     * @param {Buffer} buff
+     * @returns {Promise<Buffer>}
+     */
     static bufferToBrotli (buff) {
         return new Promise((resolve, reject) => {
             zlib.brotliCompress(buff, (err, buff) => {
@@ -39,6 +44,11 @@ export default class FileServer {
         });
     }
 
+    /**
+     * Compresses a buffer using GZip
+     * @param {Buffer} buff
+     * @returns {Promise<Buffer>}
+     */
     static bufferToGzip (buff) {
         return new Promise((resolve, reject) => {
             zlib.gzip(buff, (err, buff) => {
