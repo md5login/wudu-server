@@ -2,7 +2,7 @@ import http from 'http';
 import FileServer from "./FileServer.js";
 import { CookieWriter } from "../cookies/CookieManager.js";
 
-export default class Response extends http.ServerResponse {
+export default class WuduResponse extends http.ServerResponse {
     #cookies;
 
     /**

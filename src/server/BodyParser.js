@@ -49,7 +49,7 @@ export default class BodyParser {
         let result = {};
         let headersEnd = payload.indexOf(DOUBLE_CRLF);
         result.headers = this.#extractHeaders(payload.slice(0, headersEnd));
-        result.value = payload.slice(headersEnd + DOUBLE_CRLF.length, payload.length - 2);
+        result.value = payload.subarray(headersEnd + DOUBLE_CRLF.length, payload.length - 2);
         if (result.headers['content-disposition']) {
             let cd = result.headers['content-disposition'];
             result.paramName = cd.replace(/^.* name="(.+?)".*$/, '$1');
@@ -77,8 +77,8 @@ export default class BodyParser {
             let indices = [];
             let abort = false;
             // we use allocUnsafe for performance reasons
-            // only filled parts will be read
-            // so security is not an issue here
+            // only filled parts will be pushed to result
+            // so security concern is not an issue here
             let payload = Buffer.allocUnsafe(contentLength);
             request
                 .on('data', chunk => {
@@ -93,7 +93,7 @@ export default class BodyParser {
                     // if chunk is too small to contain boundary - return
                     if (cursor + boundary.length > size) return;
                     // find all indices of boundary in the payload starting at cursor offset
-                    indices.push(...findAll(payload.slice(0, size), boundary, cursor));
+                    indices.push(...findAll(payload.subarray(0, size), boundary, cursor));
                     // update cursor
                     cursor = Math.max(size - (boundary.length - 1), indices[indices.length - 1] + boundary.length);
                 })

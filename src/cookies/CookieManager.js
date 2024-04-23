@@ -23,8 +23,8 @@ export class CookieReader {
 
     /**
      * @param {string} name
-     * @param {string=} prefix - if given, searches for the cookie ${prefix}-${name}. Otherwise, searches for any match by the following order: name, __Secure-name, __Host-name
-     * @return {(string|undefined)}
+     * @param {string} [prefix] - if given, searches for the cookie ${prefix}-${name}. Otherwise, searches for any match by the following order: name, __Secure-name, __Host-name
+     * @return {string|undefined}
      */
     get (name, prefix) {
         if (!prefix) return this.#cookies[`${name}`] || this.#cookies[`__Secure-${name}`] || this.#cookies[`__Host-${name}`];
@@ -60,7 +60,7 @@ export class CookieWriter {
      *
      * @param {string} name
      * @param {string} value
-     * @param {CookieOptions?} opts
+     * @param {CookieOptions} [opts]
      */
     create (name, value, opts = {}) {
         opts = {...opts};
@@ -104,7 +104,7 @@ export class CookieWriter {
      *
      * @param {string} name
      * @param {string} value
-     * @param {CookieOptions?} opts
+     * @param {CookieOptions} [opts]
      */
     add (name, value, opts = {}) {
         let cookie = this.create(name, value, opts);
@@ -118,7 +118,7 @@ export class CookieWriter {
     /**
      *
      * @param {string} name - the name of the cookie to expire
-     * @param {CookieOptions=} options - the "expires" option will be overridden inside this method
+     * @param {CookieOptions} [options] - the "expires" option will be overridden inside this method
      */
     expire (name, options = {}) {
         this.add(name, '', {...options, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});

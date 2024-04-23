@@ -5,12 +5,14 @@ import { CookieReader } from "../cookies/CookieManager.js";
 /**
  * @class
  */
-export default class Request extends http.IncomingMessage {
+export default class WuduRequest extends http.IncomingMessage {
     #body;
     #cookies;
+    /**
+     * @type {number} - global maximum size for body payload. Can
+     */
     static MAX_PAYLOAD_SIZE = 8388608; // 8MB
     /**
-     *
      * @param {Socket} socket
      */
     constructor (socket) {
@@ -23,7 +25,7 @@ export default class Request extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<Buffer>}
      */
-    body (size = Request.MAX_PAYLOAD_SIZE) {
+    body (size = WuduRequest.MAX_PAYLOAD_SIZE) {
         return new Promise((resolve, reject) => {
             if (this.#body !== undefined) return resolve(this.#body);
             let chunks = [];
@@ -58,7 +60,7 @@ export default class Request extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<(Object)>}
      */
-    async json (size = Request.MAX_PAYLOAD_SIZE) {
+    async json (size = WuduRequest.MAX_PAYLOAD_SIZE) {
         return JSON.parse((await this.body(size)).toString());
     }
 
@@ -67,19 +69,27 @@ export default class Request extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<MultipartItem[]>}
      */
-    multipart (size = Request.MAX_PAYLOAD_SIZE) {
+    multipart (size = WuduRequest.MAX_PAYLOAD_SIZE) {
         return BodyParser.getMultipart(this, size);
     }
 
     /**
-     *
-     * @param {string=} sep - the separator between key-value pairs.
-     * @param {string=} del - the delimiter between key and value.
-     * @param {number=} size - the maximum size of expected payload in bytes.
+     * @deprecated use `toMap` instead
+     */
+    async map (sep = '&', del = '=', size = WuduRequest.MAX_PAYLOAD_SIZE) {
+        return this.toMap(sep, del, size);
+    }
+
+
+    /**
+     * Creates a key-value map from string in body
+     * @param {string} [sep] - the separator between key-value pairs.
+     * @param {string} [del] - the delimiter between key and value.
+     * @param {number} [size] - the maximum size of expected payload in bytes.
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<Object>}
      */
-    async map (sep = '&', del = '=', size = Request.MAX_PAYLOAD_SIZE) {
+    async toMap (sep = '&', del = '=', size = WuduRequest.MAX_PAYLOAD_SIZE) {
         let body = await this.body(size);
         let result = {};
         let keyValue = body.toString().split(sep);

@@ -17,9 +17,11 @@ function processEndpointUrl (url) {
 
 function getFullNamespace (endpoint) {
     let ns = [endpoint.namespace || ''];
-    while (endpoint.__proto__.namespace) {
-        ns.unshift(endpoint.__proto__.namespace);
-        endpoint = endpoint.__proto__;
+    let proto = Object.getPrototypeOf(endpoint);
+    while (proto.namespace) {
+        ns.unshift(proto.namespace);
+        endpoint = proto;
+        proto = Object.getPrototypeOf(endpoint);
     }
     return path.join(...new Set(ns));
 }
@@ -82,7 +84,10 @@ export default class Router {
         let parsedUrl = Router.#getParsedUrl(req);
         let method = req.method.toUpperCase();
         req.remoteAddress = req.socket.remoteAddress.split(':').pop();
-        if (!routes.has(method)) return res.end('');
+        if (!routes.has(method)) {
+            res.end('');
+            return;
+        }
         let bestMatch = '';
         let bestApi;
         let groups = {};
@@ -107,13 +112,14 @@ export default class Router {
         }
         if (bestMatch) {
             req.query = {};
-            if (parsedUrl.search) req.query = querystring.parse(parsedUrl.search.substr(1));
+            if (parsedUrl.search) req.query = querystring.parse(parsedUrl.search.substring(1));
             if (groups) {
                 req.params = {...groups};
             }
             for (let pipe of bestApi.pipes) {
                 if (!(await customPipes.get(pipe.handler)(req, res, pipe.arg))) {
-                    return !res.writableEnded && res.end();
+                    !res.writableEnded && res.end();
+                    return;
                 }
             }
             return bestApi.handler[bestApi.fnName](req, res);

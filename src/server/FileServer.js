@@ -26,7 +26,7 @@ const localCache = new Map();
  * @property {boolean} [enableTravers] - whether to enable serving path with '../'. default false
  * @property {boolean} [localCache] - if true, created runtime files map and caches requested files
  * @property {FileReadOptions} [readOptions]
- * @property {ETag=} etag
+ * @property {ETag} [etag]
  */
 
 export default class FileServer {
@@ -52,7 +52,7 @@ export default class FileServer {
      *
      * @param {string} filePath
      * @param {ServerResponse} response
-     * @param {ServeFileOptions=} options
+     * @param {ServeFileOptions} [options]
      * @param {IncomingMessage} req
      * @return {Promise<void>}
      */
@@ -129,7 +129,7 @@ export default class FileServer {
     }
 
     static getMimeTypeByName (filename) {
-        let ext = path.extname(filename).replace('.', '');
+        let ext = path.extname(filename).substring(1);
         return MimeTypes[ext] || 'application/octet-stream';
     }
 }

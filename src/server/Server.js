@@ -1,7 +1,7 @@
 import http from 'http';
 import https from 'https';
-import Request from "./Request.js";
-import Response from "./Response.js";
+import WuduRequest from "./WuduRequest.js";
+import WuduResponse from "./WuduResponse.js";
 import cluster from "cluster";
 import os from "os";
 
@@ -14,7 +14,7 @@ let workers = [];
  * @param {number} cpus
  */
 const forkProcesses = cpus => {
-    let numCores = cpus > 0 ? cpus : os.cpus().length / 2;
+    let numCores = cpus === -1 ? os.availableParallelism() : cpus;
 
     for (let i = 0; i < numCores; ++i) {
         workers.push(cluster.fork());
@@ -35,8 +35,8 @@ const runServer = initParams => {
     switch (initParams.protocol) {
         case Server.HTTPS:
             server = https.createServer({
-                IncomingMessage: Request,
-                ServerResponse: Response,
+                IncomingMessage: WuduRequest,
+                ServerResponse: WuduResponse,
                 ...initParams.options
             }, listener);
             port = 443;
@@ -44,20 +44,21 @@ const runServer = initParams => {
         case Server.HTTP:
         default:
             server = http.createServer({
-                IncomingMessage: Request,
-                ServerResponse: Response,
+                IncomingMessage: WuduRequest,
+                ServerResponse: WuduResponse,
                 ...initParams.options
             }, listener);
             port = 3000;
     }
+    port = initParams.port || port;
     if (initParams.redirectToHttps && initParams.protocol === Server.HTTPS) {
+        const redirectPort = initParams.redirectPort ?? 80;
         http.createServer(function (req, res) {
-            res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+            res.writeHead(301, { "Location": `https://${req.headers['host'].replace(`:${redirectPort}`, `:${port}`)}${req.url}`});
             res.end();
         }).listen(80);
     }
     server.keepAliveTimeout = initParams.keepAliveTimeout || 5000;
-    port = initParams.port || port;
     server.listen(port);
 };
 
@@ -65,10 +66,12 @@ const runServer = initParams => {
  * @typedef {Object} ServerInitParams
  * @property {RouteHandler} [listener]
  * @property {ServerOptions} [options]
- * @property {number} [cpus] - the amount of CPUs to run the server on. By default (0) runs on all available CPUs.
+ * @property {number} [cpus] - the amount of CPUs to run the server on. Default (0) - runs a single instance. -1 uses all available CPUs.
  * @property {number} [keepAliveTimeout] - [see docs]{@link https://nodejs.org/api/http.html#http_server_keepalivetimeout}
  * @property {number} [protocol] - 1 for HTTP, 2 for HTTPS, default 1
  * @property {number} [port] - default 3000
+ * @property {boolean} [redirectToHttps] - whether to run an HTTP server with redirection to HTTPS (runs on port :80)
+ * @property {number} [redirectPort] - the http port to redirect from. Default 80
  */
 
 export default class Server {
@@ -79,7 +82,7 @@ export default class Server {
      * @param {ServerInitParams} initParams
      */
     constructor (initParams = {}) {
-        if (cluster.isPrimary && initParams.fork) {
+        if (cluster.isPrimary && initParams.cpus) {
             forkProcesses(initParams.cpus);
         } else {
             runServer(initParams);
