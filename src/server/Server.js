@@ -51,15 +51,16 @@ const runServer = initParams => {
             port = 3000;
     }
     port = initParams.port || port;
+    const hostname = initParams.hostname || '127.0.0.1';
     if (initParams.redirectToHttps && initParams.protocol === Server.HTTPS) {
         const redirectPort = initParams.redirectPort ?? 80;
         http.createServer(function (req, res) {
             res.writeHead(301, { "Location": `https://${req.headers['host'].replace(`:${redirectPort}`, `:${port}`)}${req.url}`});
             res.end();
-        }).listen(80);
+        }).listen(80, hostname);
     }
     server.keepAliveTimeout = initParams.keepAliveTimeout || 5000;
-    server.listen(port);
+    server.listen(port, hostname);
 };
 
 /**
@@ -70,6 +71,7 @@ const runServer = initParams => {
  * @property {number} [keepAliveTimeout] - [see docs]{@link https://nodejs.org/api/http.html#http_server_keepalivetimeout}
  * @property {number} [protocol] - 1 for HTTP, 2 for HTTPS, default 1
  * @property {number} [port] - default 3000
+ * @property {string} [hostname] - default 127.0.0.1
  * @property {boolean} [redirectToHttps] - whether to run an HTTP server with redirection to HTTPS (runs on port :80)
  * @property {number} [redirectPort] - the http port to redirect from. Default 80
  */

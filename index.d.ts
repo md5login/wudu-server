@@ -44,6 +44,7 @@ declare module 'wudu-server' {
         redirectPort?: number;
         cpus?: number;
         keepAliveTimeout?: number;
+        hostname?: string;
     }
 
     class Server {
