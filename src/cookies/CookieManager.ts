@@ -1,10 +1,33 @@
+import type {ServerResponse} from 'http';
+
+type CookieOptions = {
+    /**
+     * If true, zeros "maxAge" and "expires"
+     */
+    session?: boolean;
+    httpOnly?: boolean;
+    secure?: boolean;
+    /**
+     * Default: "Lax"
+     */
+    sameSite?: 'Lax' | 'Strict' | 'None';
+    domain?: string;
+    path?: string;
+    expires?: string;
+    /**
+     * A prefix to add before the cookie name. E.g. the prefix "-x" with the name "domain" will return cookie name "-x-domain"
+     */
+    prefix?: string;
+    maxAge?: number;
+}
+
 export class CookieReader {
-    #cookies = {};
+    #cookies: Record<string, string> = {};
 
     /**
      * @param {string} cookieHeader
      */
-    constructor (cookieHeader) {
+    constructor (cookieHeader?: string) {
         if (!cookieHeader) return;
         let cookies = cookieHeader.trim().split(';');
         for (let cookie of cookies) {
@@ -17,7 +40,7 @@ export class CookieReader {
      *
      * @return {object} - an object containing all the parsed cookies
      */
-    getAll () {
+    getAll (): Record<string, string> {
         return {...this.#cookies};
     }
 
@@ -26,43 +49,21 @@ export class CookieReader {
      * @param {string} [prefix] - if given, searches for the cookie ${prefix}-${name}. Otherwise, searches for any match by the following order: name, __Secure-name, __Host-name
      * @return {string|undefined}
      */
-    get (name, prefix) {
+    get (name: string, prefix?: string): string | undefined {
         if (!prefix) return this.#cookies[`${name}`] || this.#cookies[`__Secure-${name}`] || this.#cookies[`__Host-${name}`];
         if (prefix === 'none') return this.#cookies[name];
         return this.#cookies[`${prefix}-${name}`];
     }
 }
 
-/**
- * @typedef {Object} CookieOptions - all the properties (excluding "prefix" and "session") correspond to generic cookie configuration
- * @property {boolean} [session] - if true, zeros "maxAge" and "expires"
- * @property {boolean} [httpOnly]
- * @property {boolean} [secure]
- * @property {('Lax'|'Strict'|'None')} [sameSite] - default Lax
- * @property {string} [domain]
- * @property {string} [path]
- * @property {string} [expires]
- * @property {string} [prefix] - a prefix to add before the cookie name. E.g. the prefix "-x" with the name "domain" will return cookie name "-x-domain"
- * @property {number} [maxAge]
- */
-
 export class CookieWriter {
     #response;
 
-    /**
-     * @param {ServerResponse} response
-     */
-    constructor (response) {
+    constructor (response: ServerResponse) {
         this.#response = response;
     }
 
-    /**
-     *
-     * @param {string} name
-     * @param {string} value
-     * @param {CookieOptions} [opts]
-     */
-    create (name, value, opts = {}) {
+    create (name: string, value: string, opts: CookieOptions = {}): string {
         opts = {...opts};
         if (opts.prefix) {
             switch (opts.prefix) {
@@ -100,27 +101,22 @@ export class CookieWriter {
         return cookie.join('; ');
     }
 
-    /**
-     *
-     * @param {string} name
-     * @param {string} value
-     * @param {CookieOptions} [opts]
-     */
-    add (name, value, opts = {}) {
+    add (name: string, value: string, opts: CookieOptions = {}) {
         let cookie = this.create(name, value, opts);
-        let existing = this.#response.getHeader('Set-Cookie');
-        if (typeof existing === 'string') existing = [existing];
-        else if (!existing) existing = [];
+        const header = this.#response.getHeader('Set-Cookie');
+        let existing: string[] = [];
+        if (header) {
+            existing = Array.isArray(header) ? header : [header + ''];
+        }
         existing.push(cookie);
         this.#response.setHeader('Set-Cookie', existing);
     }
 
     /**
-     *
      * @param {string} name - the name of the cookie to expire
      * @param {CookieOptions} [options] - the "expires" option will be overridden inside this method
      */
-    expire (name, options = {}) {
+    expire (name: string, options: CookieOptions = {}) {
         this.add(name, '', {...options, expires: 'Thu, 01 Jan 1970 00:00:00 GMT'});
     }
 }

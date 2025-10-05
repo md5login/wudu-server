@@ -155,4 +155,4 @@ export default {
     "3gp2": "video/3gpp2",
     "3gp2_DOES_NOT_CONTAIN_VIDEO": "audio/3gpp2",
     "7z": "application/x-7z-compressed"
-}
+} as Record<string, string>

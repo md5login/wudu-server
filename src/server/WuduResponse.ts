@@ -1,33 +1,36 @@
-import http from 'http';
-import FileServer from "./FileServer.js";
-import { CookieWriter } from "../cookies/CookieManager.js";
+import {IncomingMessage, ServerResponse} from 'http';
+import FileServer, {ETag, FileReadOptions} from './FileServer.ts';
+import { CookieWriter } from "../cookies/CookieManager.ts";
 
-export default class WuduResponse extends http.ServerResponse {
-    #cookies;
+type ServeFileOptions = {
+    ifModifiedSince?: string;
+    compression?: 'br' | 'gzip' | 'none';
+    root?: string;
+    headers?: object;
+    enableTravers?: boolean;
+    localCache?: boolean;
+    readOptions?: FileReadOptions;
+    etag?: ETag;
+}
 
-    /**
-     * @param {http.IncomingMessage} req
-     */
-    constructor (req) {
+export default class WuduResponse extends ServerResponse {
+    #cookies?: CookieWriter;
+
+    constructor (req: IncomingMessage) {
         super(req);
     }
 
     /**
      * Respond with a file
-     * @param {string} path
-     * @param {ServeFileOptions=} options
-     * @return {Promise<void>}
      */
-    async file (path, options = {}) {
+    async file (path: string, options: ServeFileOptions = {}): Promise<void> {
         return FileServer.serveFile(path, this, options);
     }
 
     /**
      * Respond with a JSON
-     * @param {Object} obj
-     * @param {BufferEncoding} encoding
      */
-    json (obj, encoding = 'utf8') {
+    json (obj: {}, encoding: BufferEncoding = 'utf8') {
         let str = JSON.stringify(obj);
         let length = Buffer.byteLength(str, encoding);
         this.writeHead(200, {'Content-Type': 'application/json', 'Content-Length': length});
@@ -36,10 +39,8 @@ export default class WuduResponse extends http.ServerResponse {
 
     /**
      * Respond with string
-     * @param {string} str
-     * @param {BufferEncoding} encoding
      */
-    text (str, encoding = 'utf8') {
+    text (str: string, encoding: BufferEncoding = 'utf8') {
         let length = Buffer.byteLength(str, encoding);
         this.writeHead(200, {'Content-Type': 'text/plain', 'Content-Length': length});
         this.end(str, encoding);
@@ -47,19 +48,14 @@ export default class WuduResponse extends http.ServerResponse {
 
     /**
      * Respond with an HTML
-     * @param {string} str
-     * @param {BufferEncoding} encoding
      */
-    html (str, encoding = 'utf8') {
+    html (str: string, encoding: BufferEncoding = 'utf8') {
         let length = Buffer.byteLength(str, encoding);
         this.writeHead(200, {'Content-Type': 'text/html', 'Content-Length': length});
         this.end(str, encoding);
     }
 
-    /**
-     * @return {CookieWriter}
-     */
-    get cookies () {
+    get cookies (): CookieWriter {
         if (!this.#cookies) this.#cookies = new CookieWriter(this);
         return this.#cookies;
     }

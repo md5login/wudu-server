@@ -1,43 +1,40 @@
 import fs from 'fs';
 import zlib from 'zlib';
 import path from 'path';
-import MimeTypes from './MimeTypes.js';
+import MimeTypes from './MimeTypes.ts';
+import {IncomingMessage, ServerResponse} from 'http';
+import {OutgoingHttpHeaders} from 'node:http';
 
 const localCache = new Map();
 
-/**
- * @typedef {Object} FileReadOptions
- * @property {BufferEncoding} [encoding]
- * @property {fs.OpenMode} [flag]
- */
+export type FileReadOptions = {
+    encoding?: BufferEncoding;
+    flag?: fs.OpenMode;
+}
 
-/**
- * @typedef {Object} ETag
- * @property {Function=} validator
- * @property {Function=} generator
- */
+export type ETag = {
+    validator?: Function;
+    generator?: Function;
+}
 
-/**
- * @typedef {Object} ServeFileOptions
- * @property {string} [ifModifiedSince] - used to respond with 304 for not modified files
- * @property {('br'|'gzip'|'none')} [compression] - what type of compression to apply before serving
- * @property {string} [root] - root path to search the file path in
- * @property {object} [headers] - headers to be sent
- * @property {boolean} [enableTravers] - whether to enable serving path with '../'. default false
- * @property {boolean} [localCache] - if true, created runtime files map and caches requested files
- * @property {FileReadOptions} [readOptions]
- * @property {ETag} [etag]
- */
+export type ServeFileOptions = {
+    ifModifiedSince?: string; // used to respond with 304 for not modified files
+    compression?: 'br' | 'gzip' | 'none'; // what type of compression to apply before serving
+    root?: string; // root path to search the file path in
+    headers?: object; // headers to be sent
+    enableTravers?: boolean; // whether to enable serving path with '../'. default false
+    localCache?: boolean; // if true, created runtime files map and caches requested files
+    readOptions?: FileReadOptions; // options to be passed to fs.readFile
+    etag?: ETag; // etag generator and validator
+}
 
 export default class FileServer {
     /**
      * Compresses a buffer using Brotli
-     * @param {Buffer} buff
-     * @returns {Promise<Buffer>}
      */
-    static bufferToBrotli (buff) {
+    static bufferToBrotli (buffer: Buffer): Promise<Buffer> {
         return new Promise((resolve, reject) => {
-            zlib.brotliCompress(buff, (err, buff) => {
+            zlib.brotliCompress(buffer, (err, buff) => {
                 if (err) return reject(err);
                 resolve(buff);
             });
@@ -46,12 +43,10 @@ export default class FileServer {
 
     /**
      * Compresses a buffer using GZip
-     * @param {Buffer} buff
-     * @returns {Promise<Buffer>}
      */
-    static bufferToGzip (buff) {
+    static bufferToGzip (buffer: Buffer): Promise<Buffer> {
         return new Promise((resolve, reject) => {
-            zlib.gzip(buff, (err, buff) => {
+            zlib.gzip(buffer, (err, buff) => {
                 if (err) return reject(err);
                 resolve(buff);
             });
@@ -66,7 +61,7 @@ export default class FileServer {
      * @param {IncomingMessage} [req]
      * @return {Promise<void>}
      */
-    static async serveFile (filePath, response, options = {}, req) {
+    static async serveFile (filePath: string, response: ServerResponse, options: ServeFileOptions = {}, req?: IncomingMessage) {
         if (!options.enableTravers && filePath.includes('../')) {
             response.writeHead(403);
             response.end(null);
@@ -74,13 +69,13 @@ export default class FileServer {
         }
         filePath = path.join(options.root || '', filePath);
 
-        let headers = {
+        let headers: OutgoingHttpHeaders = {
             ...(options.headers || {})
         };
 
         if (options.etag) {
-            if (req.headers['if-none-match']) {
-                if (options.etag.validator?.(filePath, req.headers['if-none-match'])) {
+            if (req!.headers['if-none-match']) {
+                if (options.etag.validator?.(filePath, req!.headers['if-none-match'])) {
                     response.writeHead(304);
                     response.end(null);
                     return;
@@ -98,8 +93,7 @@ export default class FileServer {
             }
         }
 
-        let stat = await fs.promises.stat(filePath).catch(e => {
-        });
+        let stat = await fs.promises.stat(filePath).catch(e => {});
         if (!stat) {
             response.writeHead(404);
             response.end(null);
@@ -113,7 +107,7 @@ export default class FileServer {
                 return;
             }
         }
-        let file = await fs.promises.readFile(filePath, options.readOptions);
+        let file = await fs.promises.readFile(filePath, options.readOptions) as Buffer;
 
         headers['Content-Type'] = FileServer.getMimeTypeByName(filePath);
         headers['Last-Modified'] = new Date(stat.mtime).toUTCString();
@@ -138,8 +132,8 @@ export default class FileServer {
         response.end(file);
     }
 
-    static getMimeTypeByName (filename) {
-        let ext = path.extname(filename).substring(1);
+    static getMimeTypeByName (filename: string) {
+        let ext = path.extname(filename).substring(1).toLowerCase();
         return MimeTypes[ext] || 'application/octet-stream';
     }
 }

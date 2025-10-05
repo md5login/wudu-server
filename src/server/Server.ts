@@ -1,19 +1,17 @@
-import http from 'http';
+import http, {IncomingMessage, ServerResponse} from 'http';
 import https from 'https';
-import WuduRequest from "./WuduRequest.js";
-import WuduResponse from "./WuduResponse.js";
+import WuduRequest from "./WuduRequest.ts";
+import WuduResponse from "./WuduResponse.ts";
 import cluster from "cluster";
 import os from "os";
+import {RouteHandler} from '../router/Router.ts';
 
 let server;
-let listener = (req, res) => res.end();
+// @ts-ignore
+let listener: RouteHandler = (req: WuduRequest, res: WuduResponse): void => {res.end()};
 let workers = [];
 
-
-/**
- * @param {number} cpus
- */
-const forkProcesses = cpus => {
+const forkProcesses = (cpus: number) => {
     let numCores = cpus === -1 ? os.availableParallelism() : cpus;
 
     for (let i = 0; i < numCores; ++i) {
@@ -29,8 +27,10 @@ const forkProcesses = cpus => {
  *
  * @param {ServerInitParams} initParams
  */
-const runServer = initParams => {
-    if (initParams.listener) listener = initParams.listener;
+const runServer = (initParams: ServerInitParams) => {
+    if (initParams.listener) { // @ts-ignore
+        listener = initParams.listener;
+    }
     let port;
     switch (initParams.protocol) {
         case Server.HTTPS:
@@ -54,8 +54,8 @@ const runServer = initParams => {
     const hostname = initParams.hostname || '127.0.0.1';
     if (initParams.redirectToHttps && initParams.protocol === Server.HTTPS) {
         const redirectPort = initParams.redirectPort ?? 80;
-        http.createServer(function (req, res) {
-            res.writeHead(301, { "Location": `https://${req.headers['host'].replace(`:${redirectPort}`, `:${port}`)}${req.url}`});
+        http.createServer(function (req: IncomingMessage, res: ServerResponse) {
+            res.writeHead(301, { "Location": `https://${req.headers['host']!.replace(`:${redirectPort}`, `:${port}`)}${req.url}`});
             res.end();
         }).listen(80, hostname);
     }
@@ -63,18 +63,17 @@ const runServer = initParams => {
     server.listen(port, hostname);
 };
 
-/**
- * @typedef {Object} ServerInitParams
- * @property {RouteHandler} [listener]
- * @property {ServerOptions} [options]
- * @property {number} [cpus] - the amount of CPUs to run the server on. Default (0) - runs a single instance. -1 uses all available CPUs.
- * @property {number} [keepAliveTimeout] - [see docs]{@link https://nodejs.org/api/http.html#http_server_keepalivetimeout}
- * @property {number} [protocol] - 1 for HTTP, 2 for HTTPS, default 1
- * @property {number} [port] - default 3000
- * @property {string} [hostname] - default 127.0.0.1
- * @property {boolean} [redirectToHttps] - whether to run an HTTP server with redirection to HTTPS (runs on port :80)
- * @property {number} [redirectPort] - the http port to redirect from. Default 80
- */
+export type ServerInitParams = {
+    listener?: (req: WuduRequest, res: WuduResponse) => any; // request listener
+    options?: http.ServerOptions | https.ServerOptions; // server options
+    cpus?: number; // the amount of CPUs to run the server on. Default (0) - runs a single instance. -1 uses all available CPUs.
+    keepAliveTimeout?: number; // [see docs]{@link https://nodejs.org/api/http.html#http_server_keepalivetimeout}
+    protocol?: number; // 1 for HTTP, 2 for HTTPS, default 1
+    port?: number; // default 3000
+    hostname?: string; // default 127.0.0.1
+    redirectToHttps?: boolean; // whether to run an HTTP server with redirection to HTTPS (runs on port :80)
+    redirectPort?: number; // the http port to redirect from. Default 80
+}
 
 export default class Server {
     static HTTP = 1;
@@ -83,7 +82,7 @@ export default class Server {
     /**
      * @param {ServerInitParams} initParams
      */
-    constructor (initParams = {}) {
+    constructor (initParams: ServerInitParams = {}) {
         if (cluster.isPrimary && initParams.cpus) {
             forkProcesses(initParams.cpus);
         } else {

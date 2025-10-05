@@ -1,21 +1,21 @@
-import http from 'http';
-import BodyParser from "./BodyParser.js";
-import { CookieReader } from "../cookies/CookieManager.js";
+import {IncomingMessage} from 'http';
+import BodyParser, {MultipartItem} from './BodyParser.ts';
+import { CookieReader } from "../cookies/CookieManager.ts";
+import {Socket} from 'node:net';
+import {ParsedUrlQuery} from 'node:querystring';
 
-/**
- * @class
- */
-export default class WuduRequest extends http.IncomingMessage {
-    #body;
-    #cookies;
+export default class WuduRequest extends IncomingMessage {
+    #body?: Buffer;
+    #cookies?: CookieReader;
+    remoteAddress?: string;
+    query?: ParsedUrlQuery;
+    params?: Record<string, string>;
+
     /**
-     * @type {number} - global maximum size for body payload. Can
+     * @type {number} - global maximum size for body payload. Can be overridden by passing size param to body(), json(), multipart() and map()/toMap() methods.
      */
-    static MAX_PAYLOAD_SIZE = 8388608; // 8MB
-    /**
-     * @param {Socket} socket
-     */
-    constructor (socket) {
+    static MAX_PAYLOAD_SIZE: number = 8388608; // 8M
+    constructor (socket: Socket) {
         super(socket);
     }
 
@@ -25,11 +25,11 @@ export default class WuduRequest extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<Buffer>}
      */
-    body (size = WuduRequest.MAX_PAYLOAD_SIZE) {
+    body (size: number = WuduRequest.MAX_PAYLOAD_SIZE): Promise<Buffer> {
         return new Promise((resolve, reject) => {
             if (this.#body !== undefined) return resolve(this.#body);
-            let chunks = [];
-            let maxLength = +this.headers['content-length'];
+            let chunks: Buffer[] = [];
+            let maxLength = +(this.headers['content-length'] || 0);
             if (maxLength > size) return reject('too large');
             let bufferSize = 0;
             let abort = false;
@@ -60,7 +60,7 @@ export default class WuduRequest extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<(Object)>}
      */
-    async json (size = WuduRequest.MAX_PAYLOAD_SIZE) {
+    async json (size: number = WuduRequest.MAX_PAYLOAD_SIZE): Promise<{}> {
         return JSON.parse((await this.body(size)).toString());
     }
 
@@ -69,15 +69,8 @@ export default class WuduRequest extends http.IncomingMessage {
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
      * @return {Promise<MultipartItem[]>}
      */
-    multipart (size = WuduRequest.MAX_PAYLOAD_SIZE) {
+    multipart (size: number = WuduRequest.MAX_PAYLOAD_SIZE): Promise<MultipartItem[]> {
         return BodyParser.getMultipart(this, size);
-    }
-
-    /**
-     * @deprecated use `toMap` instead
-     */
-    async map (sep = '&', del = '=', size = WuduRequest.MAX_PAYLOAD_SIZE) {
-        return this.toMap(sep, del, size);
     }
 
 
@@ -87,11 +80,11 @@ export default class WuduRequest extends http.IncomingMessage {
      * @param {string} [del] - the delimiter between key and value.
      * @param {number} [size] - the maximum size of expected payload in bytes.
      * @throws will throw 'too large' if the payload size exceeds the given/default size.
-     * @return {Promise<Object>}
+     * @return {Promise<Record<string, string>>}
      */
-    async toMap (sep = '&', del = '=', size = WuduRequest.MAX_PAYLOAD_SIZE) {
+    async toMap (sep: string = '&', del: string = '=', size: number = WuduRequest.MAX_PAYLOAD_SIZE): Promise<Record<string, string>> {
         let body = await this.body(size);
-        let result = {};
+        let result: Record<string, string> = {};
         let keyValue = body.toString().split(sep);
         keyValue.forEach(kv => {
             let [key, value] = kv.split(del);
@@ -103,7 +96,7 @@ export default class WuduRequest extends http.IncomingMessage {
     /**
      * @return {CookieReader}
      */
-    get cookies () {
+    get cookies (): CookieReader {
         if (!this.#cookies) this.#cookies = new CookieReader(this.headers.cookie);
         return this.#cookies;
     }

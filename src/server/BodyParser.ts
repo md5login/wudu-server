@@ -1,6 +1,8 @@
+import {IncomingMessage} from 'http';
+
 const DOUBLE_CRLF = Buffer.from([13, 10, 13, 10]);
 
-const findAll = function (buffer, match, offset = -1) {
+const findAll = function (buffer: Buffer, match: Buffer, offset = -1): number[] {
     if (!match.length) return [];
     match = Buffer.from(match);
     let result = [];
@@ -14,23 +16,18 @@ const findAll = function (buffer, match, offset = -1) {
     return result;
 }
 
-/**
- * @typedef {Object} MultipartItem
- * @property {boolean} isFile - whether the content of the payload section is a file
- * @property {string} filename - if payload section is a file, this is the filename
- * @property {string} paramName - name of the parameter in the payload section
- * @property {Buffer} value - value of the payload section
- * @property {object} headers - headers object of the payload section
- * @property {string} contentType - shortcut to headers['content-type']
- */
+export type MultipartItem = {
+    isFile: boolean;
+    filename?: string;
+    paramName: string;
+    value: Buffer;
+    headers: Record<string, string>;
+    contentType: string;
+}
 
 export default class BodyParser {
-    /**
-     * @param {Buffer} headersBuffer
-     * @return {object}
-     */
-    static #extractHeaders (headersBuffer) {
-        let result = {};
+    static #extractHeaders (headersBuffer: Buffer): Record<string, string> {
+        let result: any = {};
         let str = headersBuffer.toString();
         let headers = str.split(/\r\n/);
         headers.forEach(header => {
@@ -40,15 +37,16 @@ export default class BodyParser {
         return result;
     }
 
-    /**
-     *
-     * @param {Buffer} payload
-     * @return {object}
-     */
-    static #processPayloadChunk (payload) {
-        let result = {};
+    static #processPayloadChunk (payload: Buffer): MultipartItem {
+        let result: MultipartItem = {
+            isFile: false,
+            paramName: '',
+            value: Buffer.alloc(0),
+            headers: {},
+            contentType: 'text/plain'
+        };
         let headersEnd = payload.indexOf(DOUBLE_CRLF);
-        result.headers = this.#extractHeaders(payload.slice(0, headersEnd));
+        result.headers = this.#extractHeaders(payload.subarray(0, headersEnd));
         result.value = payload.subarray(headersEnd + DOUBLE_CRLF.length, payload.length - 2);
         if (result.headers['content-disposition']) {
             let cd = result.headers['content-disposition'];
@@ -66,15 +64,15 @@ export default class BodyParser {
         return result;
     }
 
-    static #extractPayloadChunks (request, maxSize) {
+    static #extractPayloadChunks (request: IncomingMessage, maxSize: number): Promise<Buffer[]> {
         return new Promise((resolve, reject) => {
-            if (!request.headers['content-type'].startsWith('multipart/form-data;')) return reject('wrong content type')
-            let boundary = Buffer.from(`--${request.headers['content-type'].split('boundary=')[1]}`);
-            let contentLength = +request.headers['content-length'];
+            if (!request.headers['content-type']!.startsWith('multipart/form-data;')) return reject('wrong content type')
+            let boundary = Buffer.from(`--${request.headers['content-type']!.split('boundary=')[1]}`);
+            let contentLength = +request.headers['content-length']!;
             if (contentLength > maxSize) return reject('too large');
-            let cursor;
+            let cursor: number;
             let size = 0;
-            let indices = [];
+            let indices: number[] = [];
             let abort = false;
             // we use allocUnsafe for performance reasons
             // only filled parts will be pushed to result
@@ -115,7 +113,7 @@ export default class BodyParser {
      * @param {number} size - the maximum size of expected payload in bytes. Throws exception when exceeding.
      * @return {Promise<MultipartItem[]>}
      */
-    static async getMultipart (request, size) {
+    static async getMultipart (request: IncomingMessage, size: number): Promise<MultipartItem[]> {
         let payloadChunks = await this.#extractPayloadChunks(request, size);
         if (!payloadChunks || !payloadChunks.length) return [];
         return payloadChunks.map(p => this.#processPayloadChunk(p));
